@@ -2,7 +2,7 @@ const https = require("https");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  
+
   const { messages, systemPrompt } = req.body;
   if (!messages || !systemPrompt) return res.status(400).json({ error: "Missing fields" });
 
@@ -32,17 +32,21 @@ module.exports = async function handler(req, res) {
       response.on("end", () => {
         try {
           const parsed = JSON.parse(data);
-          const text = parsed.content?.[0]?.text || "";
-          res.status(200).json({ text });
+          if (parsed.error) {
+            res.status(200).json({ text: "ERROR: " + parsed.error.message });
+          } else {
+            const text = parsed.content?.[0]?.text || "No response received";
+            res.status(200).json({ text });
+          }
         } catch (e) {
-          res.status(500).json({ error: "Parse error" });
+          res.status(200).json({ text: "ERROR: Could not parse response - " + data });
         }
         resolve();
       });
     });
 
     req2.on("error", (e) => {
-      res.status(500).json({ error: e.message });
+      res.status(200).json({ text: "ERROR: " + e.message });
       resolve();
     });
 
