@@ -26,6 +26,7 @@ const BLUE = "linear-gradient(135deg, #3b82f6, #1d4ed8)";
 const GREEN = "linear-gradient(135deg, #10b981, #047857)";
 const card = { background:"white", border:"1px solid #e5e7eb", borderRadius:20, padding:24, boxShadow:"0 1px 6px rgba(0,0,0,0.06)" };
 const POSITIONS = ["Intake Specialist","Legal Assistant","Paralegal","Case Manager","Receptionist"];
+
 const CRITERIA = {
   "Intake Specialist":"- Greeting and professionalism\n- Empathy and tone\n- Call control and information gathering\n- Qualification of leads\n- Closing and scheduling next steps",
   "Legal Assistant":"- Professional tone and communication\n- Clarity in explaining legal processes\n- Problem-solving and resourcefulness\n- Handling difficult client interactions",
@@ -33,14 +34,17 @@ const CRITERIA = {
   "Case Manager":"- Client communication and empathy\n- Case knowledge and guidance\n- Problem-solving and proper escalation\n- Professionalism and follow-through",
   "Receptionist":"- Phone etiquette and professional greeting\n- Call routing and lead screening\n- Handling difficult callers\n- Representing the firm brand",
 };
+
 const EMAIL_CRITERIA = {
-  "Intake Specialist":"- Professional and warm greeting\n- Empathy and acknowledgment\n- Clear next steps and timeline\n- Avoids making legal promises\n- Proper closing and contact information",
+  "Intake Specialist":"- Professional and warm greeting\n- Empathy and acknowledgment of client situation\n- Clear next steps and timeline\n- Avoids making legal promises\n- Proper closing and contact information",
   "Legal Assistant":"- Professional tone and proper formatting\n- Accuracy of information\n- Clarity and conciseness\n- Appropriate escalation when needed\n- Timely and actionable response",
   "Paralegal":"- Legal accuracy and correct terminology\n- Professional correspondence format\n- Appropriate level of detail\n- Proper handling of sensitive information\n- Clear action items and deadlines",
   "Case Manager":"- Client-centered communication\n- Accuracy of case information\n- Managing expectations appropriately\n- Professional tone under pressure\n- Clear explanation of next steps",
   "Receptionist":"- Warm and professional greeting\n- Accurate routing and information\n- Firm branding and tone\n- Appropriate response to complaints\n- Clear follow-up commitments",
 };
+
 const DOC_CRITERIA = "- Legal accuracy and correct terminology\n- Proper document structure and formatting\n- Completeness of all required elements\n- Professionalism and tone\n- Clarity and persuasiveness\n- Attention to case-specific facts";
+
 const SCENARIOS = {
   "Intake Specialist":[
     {id:"is_1",label:"Angry Car Accident Client",desc:"Virtual call. Client was hit last week and is furious with insurance companies. Personality: Angry and demanding immediate action."},
@@ -143,6 +147,7 @@ const SCENARIOS = {
     {id:"re_30",label:"High-Value Attorney Referral",desc:"Virtual call. Potential client referred by another attorney with high expectations."},
   ],
 };
+
 const EMAIL_SCENARIOS = {
   "Intake Specialist":[
     {id:"ei_1",label:"Angry Follow-Up After Consultation",subject:"WHERE IS MY CASE UPDATE",from:"Robert Mendez <rmendez@gmail.com>",body:"I came in for a consultation two weeks ago and nobody has called me back. I was in a serious car accident and I need to know if you are taking my case or not. This is unacceptable. I have bills piling up and I cannot wait any longer. Please respond IMMEDIATELY or I will find another firm."},
@@ -155,7 +160,7 @@ const EMAIL_SCENARIOS = {
     {id:"ela_3",label:"Request to Reschedule Deposition",subject:"Need to reschedule my deposition",from:"Angela Torres <angelat@gmail.com>",body:"I just found out my deposition is scheduled for next Thursday at 10am. I have a mandatory work training that day that I cannot miss or I will lose my job. Is there any way to reschedule? I apologize for the short notice. I only received the notice today."},
   ],
   "Paralegal":[
-    {id:"epl_1",label:"Opposing Counsel Discovery Request",subject:"RE Discovery Deficiencies Case 2024-CV-4421",from:"Susan Hartley Esq <s.hartley@hartleylaw.com>",body:"Dear Counsel, I am writing regarding the discovery responses submitted by your client on October 14th. Several responses are incomplete or evasive, specifically Interrogatories 7, 12, and 15. The document production also did not include the requested surveillance records. Please provide supplemental responses within 14 days or we will be forced to file a motion to compel."},
+    {id:"epl_1",label:"Opposing Counsel Discovery Request",subject:"RE: Discovery Deficiencies Case No 2024-CV-4421",from:"Susan Hartley Esq <s.hartley@hartleylaw.com>",body:"Dear Counsel, I am writing regarding the discovery responses submitted by your client on October 14th. Several responses are incomplete or evasive, specifically Interrogatories 7, 12, and 15. The document production also did not include the requested surveillance records. Please provide supplemental responses within 14 days or we will be forced to file a motion to compel."},
     {id:"epl_2",label:"Medical Provider Records Request",subject:"Records Request Patient David Kim",from:"Dr Pamela Cruz <pcruz@orthocare.com>",body:"To Whom It May Concern, We received your records request for the above-referenced patient. Before we can release any records, we require a signed HIPAA authorization, your firms retainer agreement, and payment of our $75 records processing fee. Please note we have a 30-day processing time once all documents are received."},
     {id:"epl_3",label:"Client Asking About Case Progress",subject:"How much longer will my case take",from:"Michael Santos <msantos@hotmail.com>",body:"Hi, it has been 8 months since my accident and I feel like nothing is happening. I finished all my medical treatment 2 months ago. My friend settled his case in 4 months. Why is mine taking so long? Can you please explain what stage we are in and what still needs to happen?"},
   ],
@@ -170,6 +175,7 @@ const EMAIL_SCENARIOS = {
     {id:"er_3",label:"Request to Speak With Attorney",subject:"Need to speak with an attorney today",from:"Rosa Maldonado <rosamaldonado@gmail.com>",body:"Good morning. I was involved in a hit and run accident yesterday evening. The other driver fled the scene. Police came and made a report. I have uninsured motorist coverage. I am in a lot of pain and do not know what to do. I need to speak with an attorney as soon as possible today."},
   ],
 };
+
 const DOC_SCENARIOS = [
   {id:"doc_1",label:"Settlement Demand Letter",docType:"Demand Letter",difficulty:"Intermediate",brief:"CASE: Martinez v. Riverside Insurance Co.\nCLIENT: Sofia Martinez, 34, nurse\nINCIDENT: Rear-end collision March 14 2024. Client stopped at red light when struck by distracted driver.\nINJURIES: Cervical herniation C4-C5, lumbar strain, 6 months physical therapy.\nSPECIALS: Medical bills $42,800. Lost wages $18,600. Future medical $12,000.\nLIABILITY: Clear. Police report confirms citation. Witness statements obtained.\nINSURANCE: Policy limit $100,000. Adjuster unresponsive for 3 weeks.\nTASK: Draft a formal settlement demand letter to the insurance adjuster requesting full policy limits. Include all damages, a 30-day response deadline, and a litigation warning.",requirements:["Formal letter header and date","Clear statement of liability","Itemized damages (medical, lost wages, pain and suffering)","Total demand amount","30-day response deadline","Litigation warning if no response"]},
   {id:"doc_2",label:"Interrogatories Personal Injury",docType:"Discovery Interrogatories",difficulty:"Advanced",brief:"CASE: Thompson v. Henderson Construction LLC\nCLIENT: Marcus Thompson, 45, electrician\nINCIDENT: Slip and fall on construction site January 8 2024. Wet concrete was unmarked, no safety signs.\nINJURIES: Right knee ACL tear, surgery required, 4 months recovery.\nSTAGE: Discovery. Send interrogatories to defendant.\nTASK: Draft at least 8 interrogatories to Henderson Construction LLC covering safety protocols, prior incidents, employee training, insurance coverage, knowledge of the hazard, and corporate structure.",requirements:["Proper case caption","Numbered interrogatories minimum 8","Covers safety protocols and training","Asks about prior similar incidents","Requests insurance policy information","Includes definitions section"]},
@@ -206,7 +212,9 @@ async function speakElevenLabs(text, onEnd) {
     audio.onended = () => { URL.revokeObjectURL(url); if (onEnd) onEnd(); };
     audio.onerror = () => { URL.revokeObjectURL(url); fallbackSpeak(text, onEnd); };
     await audio.play();
-  } catch(e) { fallbackSpeak(text, onEnd); }
+  } catch(e) {
+    fallbackSpeak(text, onEnd);
+  }
 }
 
 function fallbackSpeak(text, onEnd) {
@@ -224,7 +232,7 @@ function buildSysPrompt(position, scenario) {
   return `You are simulating a real phone call at a legal staffing firm. This is a VOICE conversation.
 ROLE: Act as ${position==="Paralegal"?"a supervising attorney":position==="Case Manager"?"a client, medical provider, or opposing counsel":"a caller or client"} for this scenario.
 SCENARIO: ${scenario.desc}
-INSTRUCTIONS: Keep ALL responses under 3 sentences. Speak naturally as if on a real phone call. No bullet points. Match the personality described. Reveal information gradually.
+INSTRUCTIONS: Keep ALL responses under 3 sentences. Speak naturally as if on a real phone call. No bullet points. Be conversational. Match the personality described. Reveal information gradually.
 DO NOT break character or provide feedback.`;
 }
 
@@ -237,15 +245,15 @@ CRITERIA:\n${CRITERIA[position]}
 OUTPUT FORMAT (use exactly this):
 OVERALL SCORE: [X/10]
 STRENGTHS:
-- [point]
-- [point]
+• [point]
+• [point]
 WEAKNESSES:
-- [point]
-- [point]
+• [point]
+• [point]
 MISSED OPPORTUNITIES:
-- [item]
+• [item]
 SUGGESTED IMPROVED RESPONSES:
-- [example]
+• [example]
 FINAL RECOMMENDATION:
 [2-3 sentences of specific actionable coaching for ${vaName}]`;
 }
@@ -272,18 +280,23 @@ function Logo() {
   );
 }
 
-function TypingDots() {
+function TypingDots({color="#9333ea"}) {
   return (
     <div style={{display:"flex",gap:4,padding:"10px 14px",background:"white",borderRadius:14,borderTopLeftRadius:4,border:"1px solid #e5e7eb",width:"fit-content"}}>
-      {[0,150,300].map((d,i)=><span key={i} style={{width:7,height:7,borderRadius:"50%",background:"#9333ea",display:"block",animation:`pulse 0.8s ${d}ms infinite`}}/>)}
+      {[0,150,300].map((d,i)=><span key={i} style={{width:7,height:7,borderRadius:"50%",background:color,display:"block",animation:`pulse 0.8s ${d}ms infinite`}}/>)}
     </div>
   );
 }
 
-function ScoreCard({score,label,color}) {
-  const n=parseFloat(score);
-  const c=n>=8?"#16a34a":n>=5?"#d97706":"#ef4444";
-  return <div style={{...card,textAlign:"center"}}><div style={{fontSize:11,fontWeight:700,color,marginBottom:4,textTransform:"uppercase",letterSpacing:"0.12em"}}>{label}</div><div style={{fontSize:72,fontWeight:900,lineHeight:1,color:c}}>{score}</div></div>;
+function ScoreCard({score, label, color}) {
+  const n = parseFloat(score);
+  const c = n>=8?"#16a34a":n>=5?"#d97706":"#ef4444";
+  return (
+    <div style={{...card,textAlign:"center"}}>
+      <div style={{fontSize:11,fontWeight:700,color,marginBottom:4,textTransform:"uppercase",letterSpacing:"0.12em"}}>{label}</div>
+      <div style={{fontSize:72,fontWeight:900,lineHeight:1,color:c}}>{score}</div>
+    </div>
+  );
 }
 
 function ProgressCard({count,total,color,label,onEvaluate,evalLabel}) {
@@ -296,29 +309,26 @@ function ProgressCard({count,total,color,label,onEvaluate,evalLabel}) {
         </div>
         <div style={{display:"flex",gap:8}}>
           {Array.from({length:total}).map((_,i)=>(
-            <div key={i} style={{width:38,height:38,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:i<count?16:13,fontWeight:700,background:i<count?color:"white",color:i<count?"white":"#d1d5db",border:i<count?"none":"2px solid #e5e7eb"}}>{i<count?"✓":i+1}</div>
+            <div key={i} style={{width:38,height:38,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:i<count?16:13,fontWeight:700,
+              background:i<count?color:"white",color:i<count?"white":"#d1d5db",border:i<count?"none":"2px solid #e5e7eb"}}>
+              {i<count?"✓":i+1}
+            </div>
           ))}
         </div>
       </div>
-      {count>=total?<div style={{borderTop:"1px solid #f0f0f0",paddingTop:16}}><button onClick={onEvaluate} style={{padding:"13px 20px",fontSize:14,fontWeight:700,borderRadius:10,border:"none",color:"white",background:color,cursor:"pointer",width:"100%"}}>{evalLabel}</button></div>:<p style={{margin:0,fontSize:13,color:"#9ca3af",borderTop:"1px solid #f0f0f0",paddingTop:12}}>Complete {total-count} more to unlock your evaluation</p>}
+      {count>=total?(
+        <div style={{borderTop:"1px solid #f0f0f0",paddingTop:16}}>
+          <button onClick={onEvaluate} style={{padding:"13px 20px",fontSize:14,fontWeight:700,borderRadius:10,border:"none",color:"white",background:color,cursor:"pointer",width:"100%"}}>
+            {evalLabel}
+          </button>
+        </div>
+      ):(
+        <p style={{margin:0,fontSize:13,color:"#9ca3af",borderTop:"1px solid #f0f0f0",paddingTop:12}}>
+          Complete {total-count} more to unlock your evaluation
+        </p>
+      )}
     </div>
   );
-}
-
-function ResultSections({e}) {
-  return [
-    {title:"Strengths",items:e.strengths,color:"#16a34a"},
-    {title:"Areas for Improvement",items:e.weaknesses,color:"#d97706"},
-    {title:"Missed Opportunities",items:e.missed,color:"#ea580c"},
-    {title:"Suggested Responses",items:e.suggested,color:"#9333ea"},
-  ].map(({title,items,color})=>items?.length>0&&(
-    <div key={title} style={card}>
-      <h3 style={{margin:"0 0 12px",color,fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>{title}</h3>
-      <ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:8}}>
-        {items.map((item,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db",flexShrink:0}}>—</span><span>{item}</span></li>)}
-      </ul>
-    </div>
-  ));
 }
 
 function App() {
@@ -346,6 +356,7 @@ function App() {
   const recognitionRef=useRef(null);
 
   useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"});},[messages,aiLoading,isSpeaking]);
+
   useEffect(()=>{
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR)return;
@@ -369,15 +380,15 @@ function App() {
     setDocScenario(null); setDocDraft(""); setDocFeedback(null); setCompletedDocs([]);
   }
 
-  const usedIds=completedSessions.map(s=>s.scenario.id);
-  const available=vaPosition?(SCENARIOS[vaPosition]||[]).filter(s=>!usedIds.includes(s.id)):[];
-  const emailPool=(EMAIL_SCENARIOS[vaPosition]||[]).filter(s=>!completedEmails.find(e=>e.id===s.id));
-  const docPool=DOC_SCENARIOS.filter(s=>!completedDocs.find(d=>d.id===s.id));
+  const usedIds = completedSessions.map(s=>s.scenario.id);
+  const available = vaPosition?(SCENARIOS[vaPosition]||[]).filter(s=>!usedIds.includes(s.id)):[];
+  const emailPool = (EMAIL_SCENARIOS[vaPosition]||[]).filter(s=>!completedEmails.find(e=>e.id===s.id));
+  const docPool = DOC_SCENARIOS.filter(s=>!completedDocs.find(d=>d.id===s.id));
 
   async function startScenario(sc) {
     setCurrentScenario(sc); setMessages([]); setTranscript(""); setPhase("chat"); setAiLoading(true);
     setStatusMsg("Connecting your call...");
-    const text=await callClaude([{role:"user",content:"Begin the scenario. You speak first."}],buildSysPrompt(vaPosition,sc));
+    const text = await callClaude([{role:"user",content:"Begin the scenario. You speak first."}],buildSysPrompt(vaPosition,sc));
     setMessages([{role:"ai",text}]); setAiLoading(false); setIsSpeaking(true);
     setStatusMsg("Client is speaking...");
     speakElevenLabs(text,()=>{setIsSpeaking(false);setStatusMsg("Your turn — click the mic to speak");});
@@ -434,9 +445,9 @@ CRITERIA:\n${EMAIL_CRITERIA[vaPosition]}
 OUTPUT FORMAT:
 SCORE: [X/10]
 STRENGTHS:
-- [point]
+• [point]
 IMPROVEMENTS:
-- [point]
+• [point]
 SUGGESTED RESPONSE:
 [Write a model response]
 COACHING TIP:
@@ -478,9 +489,9 @@ SCORE: [X/10]
 ELEMENTS CHECKLIST:
 ${docScenario.requirements.map(r=>`- ${r}: [Present/Missing/Incomplete]`).join("\n")}
 STRENGTHS:
-- [point]
+• [point]
 REVISIONS NEEDED:
-- [revision]
+• [revision]
 ATTORNEY NOTES:
 [2-3 sentences as supervising attorney]`;
     const res=await callClaude([{role:"user",content:"Review this draft."}],prompt);
@@ -506,11 +517,12 @@ ATTORNEY NOTES:
     setEvaluation(evalText); setPhase("results");
   }
 
-  const e=evaluation?parseEval(evaluation):null;
+  const e = evaluation?parseEval(evaluation):null;
 
   return (
     <div style={{minHeight:"100vh",background:"#f0f0f0",fontFamily:"system-ui,sans-serif",display:"flex",flexDirection:"column"}}>
       <style>{"@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}} @keyframes spin{to{transform:rotate(360deg)}} @keyframes ripple{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.5);opacity:0}}"}</style>
+
       <header style={{background:"white",borderBottom:"1px solid #e5e7eb",padding:"14px 28px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
         <Logo/>
         {phase!=="welcome"&&(
@@ -520,6 +532,7 @@ ATTORNEY NOTES:
           </div>
         )}
       </header>
+
       <main style={{flex:1,maxWidth:720,width:"100%",margin:"0 auto",padding:"28px 16px",display:"flex",flexDirection:"column",gap:20}}>
 
         {phase==="welcome"&&(
@@ -527,12 +540,23 @@ ATTORNEY NOTES:
             <h2 style={{margin:"0 0 6px",fontSize:22,fontWeight:800}}>Welcome to Training</h2>
             <p style={{margin:"0 0 24px",color:"#6b7280",fontSize:14}}>Enter your information to begin your training session.</p>
             <label style={{display:"block",fontSize:13,fontWeight:600,color:"#374151",marginBottom:6}}>Full Name</label>
-            <input value={vaName} onChange={ev=>setVaName(ev.target.value)} placeholder="e.g. Maria Gonzalez" style={{width:"100%",border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#111",marginBottom:20,background:"white"}}/>
+            <input value={vaName} onChange={ev=>setVaName(ev.target.value)} placeholder="e.g. Maria Gonzalez"
+              style={{width:"100%",border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#111",marginBottom:20,background:"white"}}/>
             <label style={{display:"block",fontSize:13,fontWeight:600,color:"#374151",marginBottom:10}}>Your Position</label>
             <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:28}}>
-              {POSITIONS.map(p=><button key={p} onClick={()=>setVaPosition(p)} style={{textAlign:"left",padding:"13px 16px",borderRadius:10,fontSize:14,fontWeight:500,cursor:"pointer",...(vaPosition===p?{background:GRAD,border:"none",color:"white"}:{background:"#f9f9f9",border:"1px solid #e5e7eb",color:"#374151"})}}>{p}</button>)}
+              {POSITIONS.map(p=>(
+                <button key={p} onClick={()=>setVaPosition(p)}
+                  style={{textAlign:"left",padding:"13px 16px",borderRadius:10,fontSize:14,fontWeight:500,cursor:"pointer",
+                    ...(vaPosition===p?{background:GRAD,border:"none",color:"white"}:{background:"#f9f9f9",border:"1px solid #e5e7eb",color:"#374151"})}}>
+                  {p}
+                </button>
+              ))}
             </div>
-            <button onClick={()=>{if(vaName.trim()&&vaPosition)setPhase("training-select");}} disabled={!vaName.trim()||!vaPosition} style={{width:"100%",padding:14,fontSize:16,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GRAD,cursor:"pointer",opacity:!vaName.trim()||!vaPosition?0.4:1}}>Continue</button>
+            <button onClick={()=>{if(vaName.trim()&&vaPosition)setPhase("training-select");}}
+              disabled={!vaName.trim()||!vaPosition}
+              style={{width:"100%",padding:14,fontSize:16,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GRAD,cursor:"pointer",opacity:!vaName.trim()||!vaPosition?0.4:1}}>
+              Continue
+            </button>
           </div>
         )}
 
@@ -541,21 +565,39 @@ ATTORNEY NOTES:
             <h2 style={{margin:"0 0 6px",fontSize:22,fontWeight:800}}>Choose Training Type</h2>
             <p style={{margin:"0 0 24px",color:"#6b7280",fontSize:14}}>Welcome <strong>{vaName}</strong>. Select the type of training you want to complete today.</p>
             <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:24}}>
-              {[
-                {phase:"voice-dashboard",bg:GRAD,icon:"&#128222;",title:"Call Training",desc:"Practice live voice calls with AI-simulated clients. Speak and listen just like a real phone call.",disabled:false},
-                {phase:"email-dashboard",bg:BLUE,icon:"&#9993;",title:"Email Training",desc:"Receive client emails and write professional responses. AI evaluates tone, accuracy, and clarity.",disabled:false},
-                {phase:"doc-dashboard",bg:GREEN,icon:"&#128196;",title:"Document Drafting",desc:"Draft legal documents including settlements, motions, and demand letters. AI reviews as supervising attorney.",disabled:vaPosition!=="Paralegal",tag:"Paralegal Only"},
-              ].map(item=>(
-                <button key={item.title} onClick={()=>!item.disabled&&setPhase(item.phase)} style={{textAlign:"left",padding:20,borderRadius:14,border:"1px solid #e5e7eb",background:"#f9f9f9",cursor:item.disabled?"not-allowed":"pointer",opacity:item.disabled?0.4:1}}>
-                  <div style={{display:"flex",alignItems:"center",gap:14}}>
-                    <div style={{width:50,height:50,borderRadius:"50%",background:item.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:22}} dangerouslySetInnerHTML={{__html:item.icon}}/>
-                    <div>
-                      <div style={{fontWeight:700,fontSize:16,color:"#111",marginBottom:3}}>{item.title}{item.tag&&<span style={{fontSize:11,background:"#faf5ff",color:"#9333ea",border:"1px solid #e9d5ff",borderRadius:6,padding:"2px 6px",marginLeft:6}}>{item.tag}</span>}</div>
-                      <div style={{fontSize:13,color:"#6b7280"}}>{item.desc}</div>
-                    </div>
+              <button onClick={()=>setPhase("voice-dashboard")}
+                style={{textAlign:"left",padding:20,borderRadius:14,border:"1px solid #e5e7eb",background:"#f9f9f9",cursor:"pointer"}}>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:50,height:50,borderRadius:"50%",background:GRAD,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:22}}>&#128222;</div>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:16,color:"#111",marginBottom:3}}>Call Training</div>
+                    <div style={{fontSize:13,color:"#6b7280"}}>Practice live voice calls with AI-simulated clients. Speak and listen just like a real phone call.</div>
                   </div>
-                </button>
-              ))}
+                </div>
+              </button>
+              <button onClick={()=>setPhase("email-dashboard")}
+                style={{textAlign:"left",padding:20,borderRadius:14,border:"1px solid #e5e7eb",background:"#f9f9f9",cursor:"pointer"}}>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:50,height:50,borderRadius:"50%",background:BLUE,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:22}}>&#9993;</div>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:16,color:"#111",marginBottom:3}}>Email Training</div>
+                    <div style={{fontSize:13,color:"#6b7280"}}>Receive client emails and write professional responses. AI evaluates tone, accuracy, and clarity.</div>
+                  </div>
+                </div>
+              </button>
+              <button onClick={()=>vaPosition==="Paralegal"&&setPhase("doc-dashboard")}
+                style={{textAlign:"left",padding:20,borderRadius:14,border:"1px solid #e5e7eb",background:"#f9f9f9",cursor:vaPosition==="Paralegal"?"pointer":"not-allowed",opacity:vaPosition==="Paralegal"?1:0.4}}>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <div style={{width:50,height:50,borderRadius:"50%",background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:22}}>&#128196;</div>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:16,color:"#111",marginBottom:3}}>
+                      Document Drafting
+                      <span style={{fontSize:11,background:"#faf5ff",color:"#9333ea",border:"1px solid #e9d5ff",borderRadius:6,padding:"2px 6px",marginLeft:6}}>Paralegal Only</span>
+                    </div>
+                    <div style={{fontSize:13,color:"#6b7280"}}>Draft legal documents including settlements, motions, and demand letters. AI reviews as supervising attorney.</div>
+                  </div>
+                </div>
+              </button>
             </div>
             <button onClick={()=>setPhase("welcome")} style={{width:"100%",padding:12,fontSize:14,fontWeight:600,borderRadius:12,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",cursor:"pointer"}}>Back</button>
           </div>
@@ -568,11 +610,26 @@ ATTORNEY NOTES:
               <div style={card}>
                 <p style={{margin:"0 0 14px",fontWeight:700,fontSize:13,color:"#9333ea",textTransform:"uppercase",letterSpacing:"0.08em"}}>{completedSessions.length===0?"Choose Your First Call":"Choose Next Call"}</p>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {available.map(sc=><button key={sc.id} onClick={()=>startScenario(sc)} style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}><div style={{fontWeight:700,marginBottom:4,fontSize:14}}>{sc.label}</div><div style={{fontSize:13,color:"#6b7280"}}>{sc.desc}</div></button>)}
+                  {available.map(sc=>(
+                    <button key={sc.id} onClick={()=>startScenario(sc)} style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}>
+                      <div style={{fontWeight:700,marginBottom:4,fontSize:14}}>{sc.label}</div>
+                      <div style={{fontSize:13,color:"#6b7280"}}>{sc.desc}</div>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
-            {completedSessions.length>0&&<div style={{...card,padding:"18px 24px"}}><p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>{completedSessions.map((sc,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedSessions.length-1?"1px solid #f5f5f5":"none"}}><div style={{width:26,height:26,borderRadius:"50%",background:GRAD,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div><span style={{fontSize:14,fontWeight:600,color:"#374151"}}>{sc.scenario.label}</span></div>)}</div>}
+            {completedSessions.length>0&&(
+              <div style={{...card,padding:"18px 24px"}}>
+                <p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed Calls</p>
+                {completedSessions.map((sc,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedSessions.length-1?"1px solid #f5f5f5":"none"}}>
+                    <div style={{width:26,height:26,borderRadius:"50%",background:GRAD,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div>
+                    <span style={{fontSize:14,fontWeight:600,color:"#374151"}}>{sc.scenario.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <button onClick={()=>setPhase("training-select")} style={{padding:12,borderRadius:12,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Back to Training Menu</button>
           </React.Fragment>
         )}
@@ -589,25 +646,44 @@ ATTORNEY NOTES:
             <div style={{background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:20,padding:16,display:"flex",flexDirection:"column",gap:12,overflowY:"auto",minHeight:240,maxHeight:360}}>
               {messages.map((m,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-                  <div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:16,fontSize:14,lineHeight:1.6,...(m.role==="user"?{background:GRAD,color:"white",borderTopRightRadius:4}:{background:"white",color:"#111",border:"1px solid #e5e7eb",borderTopLeftRadius:4})}}>
+                  <div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:16,fontSize:14,lineHeight:1.6,
+                    ...(m.role==="user"?{background:GRAD,color:"white",borderTopRightRadius:4}:{background:"white",color:"#111",border:"1px solid #e5e7eb",borderTopLeftRadius:4})}}>
                     <div style={{fontSize:10,fontWeight:700,marginBottom:3,opacity:0.7,letterSpacing:"0.08em"}}>{m.role==="user"?"YOU":"CLIENT"}</div>
                     {m.text}
                   </div>
                 </div>
               ))}
               {(aiLoading||isSpeaking)&&<TypingDots/>}
-              {transcript&&<div style={{display:"flex",justifyContent:"flex-end"}}><div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:16,fontSize:14,background:"rgba(147,51,234,0.08)",border:"1px dashed #9333ea",color:"#6b21a8",fontStyle:"italic"}}>{transcript}...</div></div>}
+              {transcript&&(
+                <div style={{display:"flex",justifyContent:"flex-end"}}>
+                  <div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:16,fontSize:14,background:"rgba(147,51,234,0.08)",border:"1px dashed #9333ea",color:"#6b21a8",fontStyle:"italic"}}>
+                    {transcript}...
+                  </div>
+                </div>
+              )}
               <div ref={chatEndRef}/>
             </div>
             <div style={{textAlign:"center",fontSize:13,color:"#6b7280",fontWeight:500,minHeight:18}}>{statusMsg}</div>
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,padding:"8px 0"}}>
               <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                {isListening&&<><div style={{position:"absolute",width:96,height:96,borderRadius:"50%",border:"2px solid #9333ea",animation:"ripple 1.5s infinite"}}/><div style={{position:"absolute",width:116,height:116,borderRadius:"50%",border:"2px solid #9333ea",animation:"ripple 1.5s 0.5s infinite"}}/></>}
-                <button onClick={toggleListening} disabled={isSpeaking||aiLoading} style={{width:76,height:76,borderRadius:"50%",border:"none",cursor:isSpeaking||aiLoading?"not-allowed":"pointer",fontSize:28,display:"flex",alignItems:"center",justifyContent:"center",background:isListening?"#ef4444":isSpeaking||aiLoading?"#e5e7eb":GRAD,color:"white",boxShadow:isListening?"0 0 0 4px rgba(239,68,68,0.3)":"0 4px 16px rgba(147,51,234,0.35)",transition:"all 0.2s",zIndex:10}}>&#127908;</button>
+                {isListening&&<>
+                  <div style={{position:"absolute",width:96,height:96,borderRadius:"50%",border:"2px solid #9333ea",animation:"ripple 1.5s infinite"}}/>
+                  <div style={{position:"absolute",width:116,height:116,borderRadius:"50%",border:"2px solid #9333ea",animation:"ripple 1.5s 0.5s infinite"}}/>
+                </>}
+                <button onClick={toggleListening} disabled={isSpeaking||aiLoading}
+                  style={{width:76,height:76,borderRadius:"50%",border:"none",cursor:isSpeaking||aiLoading?"not-allowed":"pointer",
+                    fontSize:28,display:"flex",alignItems:"center",justifyContent:"center",
+                    background:isListening?"#ef4444":isSpeaking||aiLoading?"#e5e7eb":GRAD,color:"white",
+                    boxShadow:isListening?"0 0 0 4px rgba(239,68,68,0.3)":"0 4px 16px rgba(147,51,234,0.35)",
+                    transition:"all 0.2s",zIndex:10}}>
+                  &#127908;
+                </button>
               </div>
               <p style={{margin:0,fontSize:13,color:"#6b7280"}}>{isListening?"Click mic again when done speaking":"Click mic to speak"}</p>
             </div>
-            <button onClick={endScenario} style={{padding:13,borderRadius:12,border:"1px solid #d1fae5",color:"#16a34a",background:"#f0fdf4",fontSize:14,fontWeight:600,cursor:"pointer"}}>End Call and Continue</button>
+            <button onClick={endScenario} style={{padding:13,borderRadius:12,border:"1px solid #d1fae5",color:"#16a34a",background:"#f0fdf4",fontSize:14,fontWeight:600,cursor:"pointer"}}>
+              End Call and Continue
+            </button>
           </React.Fragment>
         )}
 
@@ -618,11 +694,28 @@ ATTORNEY NOTES:
               <div style={card}>
                 <p style={{margin:"0 0 14px",fontWeight:700,fontSize:13,color:"#3b82f6",textTransform:"uppercase",letterSpacing:"0.08em"}}>{completedEmails.length===0?"Choose Your First Email":"Choose Next Email"}</p>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {emailPool.map(sc=><button key={sc.id} onClick={()=>{setEmailScenario(sc);setEmailReply("");setEmailFeedback(null);setPhase("email-compose");}} style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}><div style={{fontWeight:700,marginBottom:3,fontSize:14}}>{sc.label}</div><div style={{fontSize:12,color:"#6b7280"}}>From: {sc.from}</div><div style={{fontSize:12,color:"#374151",marginTop:3,fontStyle:"italic"}}>"{sc.subject}"</div></button>)}
+                  {emailPool.map(sc=>(
+                    <button key={sc.id} onClick={()=>{setEmailScenario(sc);setEmailReply("");setEmailFeedback(null);setPhase("email-compose");}}
+                      style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}>
+                      <div style={{fontWeight:700,marginBottom:3,fontSize:14}}>{sc.label}</div>
+                      <div style={{fontSize:12,color:"#6b7280"}}>From: {sc.from}</div>
+                      <div style={{fontSize:12,color:"#374151",marginTop:3,fontStyle:"italic"}}>"{sc.subject}"</div>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
-            {completedEmails.length>0&&<div style={{...card,padding:"18px 24px"}}><p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>{completedEmails.map((em,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedEmails.length-1?"1px solid #f5f5f5":"none"}}><div style={{width:26,height:26,borderRadius:"50%",background:BLUE,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div><span style={{fontSize:14,fontWeight:600,color:"#374151"}}>{em.label}</span></div>)}</div>}
+            {completedEmails.length>0&&(
+              <div style={{...card,padding:"18px 24px"}}>
+                <p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>
+                {completedEmails.map((em,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedEmails.length-1?"1px solid #f5f5f5":"none"}}>
+                    <div style={{width:26,height:26,borderRadius:"50%",background:BLUE,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div>
+                    <span style={{fontSize:14,fontWeight:600,color:"#374151"}}>{em.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <button onClick={()=>setPhase("training-select")} style={{padding:12,borderRadius:12,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Back to Training Menu</button>
           </React.Fragment>
         )}
@@ -632,8 +725,10 @@ ATTORNEY NOTES:
             <div style={{...card,borderLeft:"4px solid #3b82f6",borderRadius:"0 20px 20px 0"}}>
               <p style={{margin:"0 0 10px",fontSize:11,fontWeight:700,color:"#3b82f6",textTransform:"uppercase",letterSpacing:"0.1em"}}>Incoming Email</p>
               <div style={{display:"grid",gridTemplateColumns:"60px 1fr",gap:"4px 8px",marginBottom:10}}>
-                <span style={{fontSize:12,color:"#9ca3af",fontWeight:600}}>From:</span><span style={{fontSize:13,color:"#374151"}}>{emailScenario.from}</span>
-                <span style={{fontSize:12,color:"#9ca3af",fontWeight:600}}>Subject:</span><span style={{fontSize:13,color:"#111",fontWeight:700}}>{emailScenario.subject}</span>
+                <span style={{fontSize:12,color:"#9ca3af",fontWeight:600}}>From:</span>
+                <span style={{fontSize:13,color:"#374151"}}>{emailScenario.from}</span>
+                <span style={{fontSize:12,color:"#9ca3af",fontWeight:600}}>Subject:</span>
+                <span style={{fontSize:13,color:"#111",fontWeight:700}}>{emailScenario.subject}</span>
               </div>
               <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#374151",lineHeight:1.7,borderLeft:"2px solid #e5e7eb"}}>{emailScenario.body}</div>
             </div>
@@ -641,12 +736,16 @@ ATTORNEY NOTES:
               <p style={{margin:"0 0 4px",fontSize:13,fontWeight:700,color:"#374151"}}>Your Reply</p>
               <p style={{margin:"0 0 10px",fontSize:12,color:"#9ca3af"}}>Write your professional email response. You will be evaluated on tone, accuracy, and clarity.</p>
               <div style={{marginBottom:8,padding:"7px 10px",background:"#f9f9f9",borderRadius:8,fontSize:12,color:"#6b7280"}}>To: {emailScenario.from} — Re: {emailScenario.subject}</div>
-              <textarea value={emailReply} onChange={ev=>setEmailReply(ev.target.value)} placeholder="Type your email response here..." style={{width:"100%",minHeight:200,border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#111",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,outline:"none"}}/>
+              <textarea value={emailReply} onChange={ev=>setEmailReply(ev.target.value)} placeholder="Type your email response here..."
+                style={{width:"100%",minHeight:200,border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#111",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,outline:"none"}}/>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10}}>
                 <span style={{fontSize:12,color:"#9ca3af"}}>{emailReply.length} characters</span>
                 <div style={{display:"flex",gap:10}}>
                   <button onClick={()=>setPhase("email-dashboard")} style={{padding:"9px 14px",borderRadius:10,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Cancel</button>
-                  <button onClick={submitEmailReply} disabled={aiLoading||!emailReply.trim()} style={{padding:"9px 18px",borderRadius:10,border:"none",color:"white",background:BLUE,fontSize:13,fontWeight:700,cursor:"pointer",opacity:aiLoading||!emailReply.trim()?0.4:1}}>{aiLoading?"Evaluating...":"Submit for Review"}</button>
+                  <button onClick={submitEmailReply} disabled={aiLoading||!emailReply.trim()}
+                    style={{padding:"9px 18px",borderRadius:10,border:"none",color:"white",background:BLUE,fontSize:13,fontWeight:700,cursor:"pointer",opacity:aiLoading||!emailReply.trim()?0.4:1}}>
+                    {aiLoading?"Evaluating...":"Submit for Review"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -655,14 +754,19 @@ ATTORNEY NOTES:
 
         {phase==="email-feedback"&&emailFeedback&&(()=>{
           const f=parseEmailFeedback(emailFeedback);
-          return <React.Fragment>
-            <ScoreCard score={f.score} label="Email Score" color="#3b82f6"/>
-            {f.strengths?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#16a34a",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Strengths</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.strengths.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
-            {f.improvements?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#d97706",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Areas for Improvement</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.improvements.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
-            {f.suggested&&<div style={{...card,borderLeft:"4px solid #3b82f6",borderRadius:"0 20px 20px 0"}}><h3 style={{margin:"0 0 10px",color:"#3b82f6",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Model Response</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{f.suggested}</p></div>}
-            {f.tip&&<div style={{...card,background:"#faf5ff",border:"1px solid #e9d5ff"}}><h3 style={{margin:"0 0 6px",color:"#9333ea",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Coaching Tip</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.6}}>{f.tip}</p></div>}
-            <button onClick={()=>{setEmailScenario(null);setEmailReply("");setEmailFeedback(null);setPhase("email-dashboard");}} style={{width:"100%",padding:14,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:BLUE,cursor:"pointer"}}>{completedEmails.length>=MIN_SCENARIOS?"Get Final Evaluation":"Next Email"}</button>
-          </React.Fragment>;
+          return (
+            <React.Fragment>
+              <ScoreCard score={f.score} label="Email Score" color="#3b82f6"/>
+              {f.strengths?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#16a34a",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Strengths</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.strengths.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
+              {f.improvements?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#d97706",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Areas for Improvement</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.improvements.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
+              {f.suggested&&<div style={{...card,borderLeft:"4px solid #3b82f6",borderRadius:"0 20px 20px 0"}}><h3 style={{margin:"0 0 10px",color:"#3b82f6",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Model Response</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{f.suggested}</p></div>}
+              {f.tip&&<div style={{...card,background:"#faf5ff",border:"1px solid #e9d5ff"}}><h3 style={{margin:"0 0 6px",color:"#9333ea",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Coaching Tip</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.6}}>{f.tip}</p></div>}
+              <button onClick={()=>{setEmailScenario(null);setEmailReply("");setEmailFeedback(null);setPhase("email-dashboard");}}
+                style={{width:"100%",padding:14,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:BLUE,cursor:"pointer"}}>
+                {completedEmails.length>=MIN_SCENARIOS?"Get Final Evaluation":"Next Email"}
+              </button>
+            </React.Fragment>
+          );
         })()}
 
         {phase==="doc-dashboard"&&(
@@ -673,10 +777,15 @@ ATTORNEY NOTES:
                 <p style={{margin:"0 0 14px",fontWeight:700,fontSize:13,color:"#10b981",textTransform:"uppercase",letterSpacing:"0.08em"}}>{completedDocs.length===0?"Choose Your First Document":"Choose Next Document"}</p>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   {docPool.map(sc=>(
-                    <button key={sc.id} onClick={()=>{setDocScenario(sc);setDocDraft("");setDocFeedback(null);setPhase("doc-compose");}} style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}>
+                    <button key={sc.id} onClick={()=>{setDocScenario(sc);setDocDraft("");setDocFeedback(null);setPhase("doc-compose");}}
+                      style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}>
                       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
                         <span style={{fontWeight:700,fontSize:14}}>{sc.label}</span>
-                        <span style={{fontSize:11,padding:"2px 8px",borderRadius:20,fontWeight:600,background:sc.difficulty==="Beginner"?"#dcfce7":sc.difficulty==="Intermediate"?"#fef9c3":"#fee2e2",color:sc.difficulty==="Beginner"?"#16a34a":sc.difficulty==="Intermediate"?"#a16207":"#dc2626"}}>{sc.difficulty}</span>
+                        <span style={{fontSize:11,padding:"2px 8px",borderRadius:20,fontWeight:600,
+                          background:sc.difficulty==="Beginner"?"#dcfce7":sc.difficulty==="Intermediate"?"#fef9c3":"#fee2e2",
+                          color:sc.difficulty==="Beginner"?"#16a34a":sc.difficulty==="Intermediate"?"#a16207":"#dc2626"}}>
+                          {sc.difficulty}
+                        </span>
                       </div>
                       <div style={{fontSize:12,color:"#6b7280"}}>{sc.docType}</div>
                     </button>
@@ -684,7 +793,17 @@ ATTORNEY NOTES:
                 </div>
               </div>
             )}
-            {completedDocs.length>0&&<div style={{...card,padding:"18px 24px"}}><p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>{completedDocs.map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedDocs.length-1?"1px solid #f5f5f5":"none"}}><div style={{width:26,height:26,borderRadius:"50%",background:GREEN,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div><div><div style={{fontSize:14,fontWeight:600,color:"#374151"}}>{d.label}</div><div style={{fontSize:12,color:"#9ca3af"}}>{d.docType}</div></div></div>)}</div>}
+            {completedDocs.length>0&&(
+              <div style={{...card,padding:"18px 24px"}}>
+                <p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>
+                {completedDocs.map((d,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedDocs.length-1?"1px solid #f5f5f5":"none"}}>
+                    <div style={{width:26,height:26,borderRadius:"50%",background:GREEN,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#374151"}}>{d.label}</div><div style={{fontSize:12,color:"#9ca3af"}}>{d.docType}</div></div>
+                  </div>
+                ))}
+              </div>
+            )}
             <button onClick={()=>setPhase("training-select")} style={{padding:12,borderRadius:12,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Back to Training Menu</button>
           </React.Fragment>
         )}
@@ -694,7 +813,11 @@ ATTORNEY NOTES:
             <div style={{...card,borderLeft:"4px solid #10b981",borderRadius:"0 20px 20px 0"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,flexWrap:"wrap",gap:8}}>
                 <p style={{margin:0,fontSize:11,fontWeight:700,color:"#10b981",textTransform:"uppercase",letterSpacing:"0.1em"}}>Assignment from Supervising Attorney</p>
-                <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:docScenario.difficulty==="Beginner"?"#dcfce7":docScenario.difficulty==="Intermediate"?"#fef9c3":"#fee2e2",color:docScenario.difficulty==="Beginner"?"#16a34a":docScenario.difficulty==="Intermediate"?"#a16207":"#dc2626"}}>{docScenario.difficulty}</span>
+                <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,
+                  background:docScenario.difficulty==="Beginner"?"#dcfce7":docScenario.difficulty==="Intermediate"?"#fef9c3":"#fee2e2",
+                  color:docScenario.difficulty==="Beginner"?"#16a34a":docScenario.difficulty==="Intermediate"?"#a16207":"#dc2626"}}>
+                  {docScenario.difficulty}
+                </span>
               </div>
               <h3 style={{margin:"0 0 10px",fontSize:16,fontWeight:800,color:"#111"}}>{docScenario.label}</h3>
               <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",fontSize:13,color:"#374151",lineHeight:1.8,whiteSpace:"pre-line",fontFamily:"monospace",border:"1px solid #e5e7eb"}}>{docScenario.brief}</div>
@@ -702,15 +825,25 @@ ATTORNEY NOTES:
             <div style={card}>
               <p style={{margin:"0 0 6px",fontSize:13,fontWeight:700,color:"#374151"}}>Required Elements</p>
               <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:16}}>
-                {docScenario.requirements.map((r,i)=><div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,fontSize:13,color:"#374151"}}><div style={{width:18,height:18,borderRadius:"50%",border:"1.5px solid #10b981",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"#10b981",fontWeight:700,marginTop:1}}>{i+1}</div>{r}</div>)}
+                {docScenario.requirements.map((r,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,fontSize:13,color:"#374151"}}>
+                    <div style={{width:18,height:18,borderRadius:"50%",border:"1.5px solid #10b981",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"#10b981",fontWeight:700,marginTop:1}}>{i+1}</div>
+                    {r}
+                  </div>
+                ))}
               </div>
               <p style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:"#374151",borderTop:"1px solid #f0f0f0",paddingTop:14}}>Your Draft</p>
-              <textarea value={docDraft} onChange={ev=>setDocDraft(ev.target.value)} placeholder={"Draft your "+docScenario.docType+" here...\n\nInclude all required elements. Use proper legal formatting."} style={{width:"100%",minHeight:340,border:"1px solid #e5e7eb",borderRadius:10,padding:"14px 16px",fontSize:13,color:"#111",resize:"vertical",fontFamily:"Georgia,serif",lineHeight:1.8,outline:"none"}}/>
+              <textarea value={docDraft} onChange={ev=>setDocDraft(ev.target.value)}
+                placeholder={"Draft your "+docScenario.docType+" here...\n\nInclude all required elements listed above. Use proper legal formatting."}
+                style={{width:"100%",minHeight:340,border:"1px solid #e5e7eb",borderRadius:10,padding:"14px 16px",fontSize:13,color:"#111",resize:"vertical",fontFamily:"Georgia,serif",lineHeight:1.8,outline:"none"}}/>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10}}>
                 <span style={{fontSize:12,color:"#9ca3af"}}>{docDraft.split(/\s+/).filter(Boolean).length} words</span>
                 <div style={{display:"flex",gap:10}}>
                   <button onClick={()=>setPhase("doc-dashboard")} style={{padding:"9px 14px",borderRadius:10,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Cancel</button>
-                  <button onClick={submitDocDraft} disabled={aiLoading||!docDraft.trim()} style={{padding:"9px 18px",borderRadius:10,border:"none",color:"white",background:GREEN,fontSize:13,fontWeight:700,cursor:"pointer",opacity:aiLoading||!docDraft.trim()?0.4:1}}>{aiLoading?"Attorney Reviewing...":"Submit for Attorney Review"}</button>
+                  <button onClick={submitDocDraft} disabled={aiLoading||!docDraft.trim()}
+                    style={{padding:"9px 18px",borderRadius:10,border:"none",color:"white",background:GREEN,fontSize:13,fontWeight:700,cursor:"pointer",opacity:aiLoading||!docDraft.trim()?0.4:1}}>
+                    {aiLoading?"Attorney Reviewing...":"Submit for Attorney Review"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -719,14 +852,36 @@ ATTORNEY NOTES:
 
         {phase==="doc-feedback"&&docFeedback&&(()=>{
           const f=parseDocFeedback(docFeedback);
-          return <React.Fragment>
-            <ScoreCard score={f.score} label="Attorney Review Score" color="#10b981"/>
-            {f.checklist?.length>0&&<div style={card}><h3 style={{margin:"0 0 12px",color:"#374151",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Required Elements Checklist</h3><div style={{display:"flex",flexDirection:"column",gap:6}}>{f.checklist.map((item,i)=>{const ok=item.toLowerCase().includes("present");const miss=item.toLowerCase().includes("missing");return <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 12px",borderRadius:8,background:ok?"#f0fdf4":miss?"#fef2f2":"#fefce8",border:"1px solid "+(ok?"#bbf7d0":miss?"#fecaca":"#fef08a")}}><span style={{fontSize:14,flexShrink:0}}>{ok?"✓":miss?"✗":"~"}</span><span style={{fontSize:13,color:"#374151"}}>{item}</span></div>;})}</div></div>}
-            {f.strengths?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#16a34a",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Well Done</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.strengths.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
-            {f.revisions?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#d97706",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Revisions Needed</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.revisions.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
-            {f.notes&&<div style={{...card,borderLeft:"4px solid #10b981",borderRadius:"0 20px 20px 0"}}><h3 style={{margin:"0 0 8px",color:"#10b981",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Attorney Notes</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,fontStyle:"italic"}}>{f.notes}</p></div>}
-            <button onClick={()=>{setDocScenario(null);setDocDraft("");setDocFeedback(null);setPhase("doc-dashboard");}} style={{width:"100%",padding:14,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GREEN,cursor:"pointer"}}>{completedDocs.length>=MIN_SCENARIOS?"Get Final Evaluation":"Next Document"}</button>
-          </React.Fragment>;
+          return (
+            <React.Fragment>
+              <ScoreCard score={f.score} label="Attorney Review Score" color="#10b981"/>
+              {f.checklist?.length>0&&(
+                <div style={card}>
+                  <h3 style={{margin:"0 0 12px",color:"#374151",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Required Elements Checklist</h3>
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {f.checklist.map((item,i)=>{
+                      const ok=item.toLowerCase().includes("present");
+                      const miss=item.toLowerCase().includes("missing");
+                      return (
+                        <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 12px",borderRadius:8,
+                          background:ok?"#f0fdf4":miss?"#fef2f2":"#fefce8",border:"1px solid "+(ok?"#bbf7d0":miss?"#fecaca":"#fef08a")}}>
+                          <span style={{fontSize:14,flexShrink:0}}>{ok?"✓":miss?"✗":"~"}</span>
+                          <span style={{fontSize:13,color:"#374151"}}>{item}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {f.strengths?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#16a34a",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Well Done</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.strengths.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
+              {f.revisions?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#d97706",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Revisions Needed</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.revisions.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
+              {f.notes&&<div style={{...card,borderLeft:"4px solid #10b981",borderRadius:"0 20px 20px 0"}}><h3 style={{margin:"0 0 8px",color:"#10b981",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Attorney Notes</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,fontStyle:"italic"}}>{f.notes}</p></div>}
+              <button onClick={()=>{setDocScenario(null);setDocDraft("");setDocFeedback(null);setPhase("doc-dashboard");}}
+                style={{width:"100%",padding:14,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GREEN,cursor:"pointer"}}>
+                {completedDocs.length>=MIN_SCENARIOS?"Get Final Evaluation":"Next Document"}
+              </button>
+            </React.Fragment>
+          );
         })()}
 
         {phase==="evaluating"&&(
@@ -744,9 +899,28 @@ ATTORNEY NOTES:
               <div style={{fontSize:80,fontWeight:900,lineHeight:1,color:parseFloat(e.score)>=8?"#16a34a":parseFloat(e.score)>=5?"#d97706":"#ef4444"}}>{e.score}</div>
               <div style={{fontSize:14,color:"#6b7280",marginTop:8}}>{vaName} &middot; {vaPosition}</div>
             </div>
-            <ResultSections e={e}/>
-            {e.rec&&<div style={card}><h3 style={{margin:"0 0 10px",fontSize:14,color:"#111",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Final Recommendation</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,background:"#faf5ff",padding:"14px 16px",borderRadius:10}}>{e.rec}</p></div>}
-            <button onClick={reset} style={{width:"100%",padding:16,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GRAD,cursor:"pointer"}}>Start New Session</button>
+            {[
+              {title:"Strengths",items:e.strengths,color:"#16a34a"},
+              {title:"Areas for Improvement",items:e.weaknesses,color:"#d97706"},
+              {title:"Missed Opportunities",items:e.missed,color:"#ea580c"},
+              {title:"Suggested Responses",items:e.suggested,color:"#9333ea"},
+            ].map(({title,items,color})=>items?.length>0&&(
+              <div key={title} style={card}>
+                <h3 style={{margin:"0 0 12px",color,fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>{title}</h3>
+                <ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:8}}>
+                  {items.map((item,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db",flexShrink:0}}>—</span><span>{item}</span></li>)}
+                </ul>
+              </div>
+            ))}
+            {e.rec&&(
+              <div style={card}>
+                <h3 style={{margin:"0 0 10px",fontSize:14,color:"#111",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Final Recommendation</h3>
+                <p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,background:"#faf5ff",padding:"14px 16px",borderRadius:10}}>{e.rec}</p>
+              </div>
+            )}
+            <button onClick={reset} style={{width:"100%",padding:16,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GRAD,cursor:"pointer"}}>
+              Start New Session
+            </button>
           </React.Fragment>
         )}
 
@@ -754,6 +928,7 @@ ATTORNEY NOTES:
     </div>
   );
 }
+
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 </script>
 </body>
