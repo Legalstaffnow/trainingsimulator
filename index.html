@@ -361,7 +361,7 @@ function App() {
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR)return;
     const rec=new SR();
-    rec.continuous=false; rec.interimResults=true; rec.lang="en-US";
+    rec.continuous=true; rec.interimResults=true; rec.lang="en-US";
     rec.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join("");setTranscript(t);};
     rec.onend=()=>setIsListening(false);
     rec.onerror=()=>{setIsListening(false);setStatusMsg("Microphone error. Please allow microphone access in Chrome.");};
