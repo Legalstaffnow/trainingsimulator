@@ -2,13 +2,12 @@ const https = require("https");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
   const { messages, systemPrompt } = req.body;
   if (!messages || !systemPrompt) return res.status(400).json({ error: "Missing fields" });
 
   const body = JSON.stringify({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1000,
+    max_tokens: 400,
     system: systemPrompt,
     messages,
   });
@@ -35,18 +34,17 @@ module.exports = async function handler(req, res) {
           if (parsed.error) {
             res.status(200).json({ text: "ERROR: " + parsed.error.message });
           } else {
-            const text = parsed.content?.[0]?.text || "No response received";
-            res.status(200).json({ text });
+            res.status(200).json({ text: parsed.content?.[0]?.text || "No response" });
           }
         } catch (e) {
-          res.status(200).json({ text: "ERROR: Could not parse response - " + data });
+          res.status(500).json({ error: "Parse error" });
         }
         resolve();
       });
     });
 
     req2.on("error", (e) => {
-      res.status(200).json({ text: "ERROR: " + e.message });
+      res.status(500).json({ error: e.message });
       resolve();
     });
 
