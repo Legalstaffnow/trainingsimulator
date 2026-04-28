@@ -10,9 +10,10 @@
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:system-ui,sans-serif;background:#f0f0f0}
-    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
     @keyframes spin{to{transform:rotate(360deg)}}
-    input:focus{outline:2px solid #9333ea;outline-offset:1px}
+    @keyframes ripple{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.5);opacity:0}}
+    input:focus,textarea:focus{outline:2px solid #9333ea;outline-offset:1px}
   </style>
 </head>
 <body>
@@ -21,6 +22,8 @@
 const { useState, useRef, useEffect } = React;
 const MIN_SCENARIOS = 3, MAX_SCENARIOS = 4;
 const GRAD = "linear-gradient(135deg, #bf5cf7, #6b21a8)";
+const BLUE = "linear-gradient(135deg, #3b82f6, #1d4ed8)";
+const GREEN = "linear-gradient(135deg, #10b981, #047857)";
 const card = { background:"white", border:"1px solid #e5e7eb", borderRadius:20, padding:24, boxShadow:"0 1px 6px rgba(0,0,0,0.06)" };
 const POSITIONS = ["Intake Specialist","Legal Assistant","Paralegal","Case Manager","Receptionist"];
 const CRITERIA = {
@@ -28,19 +31,27 @@ const CRITERIA = {
   "Legal Assistant":"- Professional tone and communication\n- Clarity in explaining legal processes\n- Problem-solving and resourcefulness\n- Handling difficult client interactions",
   "Paralegal":"- Issue spotting and legal awareness\n- Understanding of legal workflow\n- Organization and attention to detail\n- Quality of written work",
   "Case Manager":"- Client communication and empathy\n- Case knowledge and guidance\n- Problem-solving and proper escalation\n- Professionalism and follow-through",
-  "Receptionist":"- Phone etiquette and professional greeting\n- Call routing and lead screening\n- Handling difficult callers\n- Representing the firm's brand",
+  "Receptionist":"- Phone etiquette and professional greeting\n- Call routing and lead screening\n- Handling difficult callers\n- Representing the firm brand",
 };
+const EMAIL_CRITERIA = {
+  "Intake Specialist":"- Professional and warm greeting\n- Empathy and acknowledgment\n- Clear next steps and timeline\n- Avoids making legal promises\n- Proper closing and contact information",
+  "Legal Assistant":"- Professional tone and proper formatting\n- Accuracy of information\n- Clarity and conciseness\n- Appropriate escalation when needed\n- Timely and actionable response",
+  "Paralegal":"- Legal accuracy and correct terminology\n- Professional correspondence format\n- Appropriate level of detail\n- Proper handling of sensitive information\n- Clear action items and deadlines",
+  "Case Manager":"- Client-centered communication\n- Accuracy of case information\n- Managing expectations appropriately\n- Professional tone under pressure\n- Clear explanation of next steps",
+  "Receptionist":"- Warm and professional greeting\n- Accurate routing and information\n- Firm branding and tone\n- Appropriate response to complaints\n- Clear follow-up commitments",
+};
+const DOC_CRITERIA = "- Legal accuracy and correct terminology\n- Proper document structure and formatting\n- Completeness of all required elements\n- Professionalism and tone\n- Clarity and persuasiveness\n- Attention to case-specific facts";
 const SCENARIOS = {
   "Intake Specialist":[
     {id:"is_1",label:"Angry Car Accident Client",desc:"Virtual call. Client was hit last week and is furious with insurance companies. Personality: Angry and demanding immediate action."},
     {id:"is_2",label:"Emotional Client",desc:"Virtual call. Client overwhelmed after a fall and unsure if they have a case. Personality: Distressed and emotional."},
     {id:"is_3",label:"Low-Quality Lead",desc:"Virtual call. Caller is vague, giving minimal information. Personality: Disengaged and uncooperative."},
     {id:"is_4",label:"Uninsured Motorist Claim",desc:"Virtual call. At-fault driver had no insurance. Client confused about options. Personality: Worried and overwhelmed."},
-    {id:"is_5",label:"Workers' Comp Inquiry",desc:"Virtual call. Client injured at work but afraid of employer retaliation. Personality: Nervous and hesitant."},
+    {id:"is_5",label:"Workers Comp Inquiry",desc:"Virtual call. Client injured at work but afraid of employer retaliation. Personality: Nervous and hesitant."},
     {id:"is_6",label:"Medical Malpractice Call",desc:"Virtual call. Caller believes a family member died due to surgical error. Personality: Grief-stricken."},
     {id:"is_7",label:"Drunk Driving Victim",desc:"Virtual call. Client hit by drunk driver, still recovering. Personality: Angry and traumatized."},
     {id:"is_8",label:"Slip and Fall in a Store",desc:"Virtual call. Client slipped on wet floor at grocery store. Personality: Embarrassed but in pain."},
-    {id:"is_9",label:"Dog Bite Incident",desc:"Virtual call. Caller bitten by neighbor's dog and does not want to cause problems. Personality: Anxious."},
+    {id:"is_9",label:"Dog Bite Incident",desc:"Virtual call. Caller bitten by neighbors dog. Personality: Anxious."},
     {id:"is_10",label:"Statute of Limitations Concern",desc:"Virtual call. Caller just found out their filing deadline may be expiring soon. Personality: Panicked."},
   ],
   "Legal Assistant":[
@@ -51,16 +62,16 @@ const SCENARIOS = {
     {id:"la_5",label:"Client Wants to Fire the Attorney",desc:"Virtual call. Client unhappy with case progress. Personality: Hostile."},
     {id:"la_6",label:"Language Barrier Client",desc:"Virtual call. Client has limited English and needs help communicating an urgent update."},
     {id:"la_7",label:"Client Requesting Case File",desc:"Virtual call. Client demanding full case file immediately. Personality: Suspicious."},
-    {id:"la_8",label:"Client Missed Key Appointment",desc:"Virtual call. Client missed a mandatory medical evaluation. Personality: Defensive. Reschedule urgently."},
-    {id:"la_9",label:"Hostile Family Member Calling",desc:"Virtual call. Client's spouse demanding case updates but not authorized on the file. Personality: Aggressive."},
+    {id:"la_8",label:"Client Missed Key Appointment",desc:"Virtual call. Client missed a mandatory medical evaluation. Personality: Defensive."},
+    {id:"la_9",label:"Hostile Family Member Calling",desc:"Virtual call. Clients spouse demanding case updates but not authorized on the file."},
     {id:"la_10",label:"Client Threatening Bad Review",desc:"Virtual call. Frustrated client threatening negative review unless attorney calls today."},
   ],
   "Paralegal":[
     {id:"pl_1",label:"Missed Deadline Risk",desc:"Virtual task. Court filing deadline is 48 hours away and supervising attorney is unavailable."},
     {id:"pl_2",label:"Draft Client Update Email",desc:"Virtual task. Attorney needs professional client update email. Case in discovery with delays."},
     {id:"pl_3",label:"Case Summary Task",desc:"Virtual task. Supervising attorney needs concise case summary for upcoming mediation."},
-    {id:"pl_4",label:"Deposition Preparation",desc:"Virtual task. Walk client through upcoming deposition - process, dos and don'ts, key facts."},
-    {id:"pl_5",label:"Settlement Offer Review",desc:"Virtual task. New settlement offer arrived. Attorney asks for pros/cons memo."},
+    {id:"pl_4",label:"Deposition Preparation",desc:"Virtual task. Walk client through upcoming deposition, process, dos and donts, key facts."},
+    {id:"pl_5",label:"Settlement Offer Review",desc:"Virtual task. New settlement offer arrived. Attorney asks for pros and cons memo."},
     {id:"pl_6",label:"Witness Statement Discrepancy",desc:"Virtual task. Two witness statements contradict each other. Analyze and flag the issues."},
     {id:"pl_7",label:"Draft a Demand Letter",desc:"Virtual task. Draft demand letter to opposing insurer using medical records and accident report."},
     {id:"pl_8",label:"Medical Records Review",desc:"Virtual task. Review 80 pages of medical records and prepare damages summary in 3 days."},
@@ -68,75 +79,113 @@ const SCENARIOS = {
     {id:"pl_10",label:"Court Filing Error Discovered",desc:"Virtual task. Motion filed with wrong case number. Deadline was yesterday. Attorney is in trial."},
   ],
   "Case Manager":[
-    {id:"cm_1",label:"Client Demanding Case Update",desc:"Virtual call. Client has not heard from attorney in two weeks. Personality: Frustrated and threatening to leave."},
-    {id:"cm_2",label:"Medical Provider Withholding Records",desc:"Virtual call. Provider refuses to release records without upfront payment. Negotiate professionally."},
-    {id:"cm_3",label:"Settlement Timeline Question",desc:"Virtual call. Client demanding a definite settlement date. Personality: Impatient and fixated."},
-    {id:"cm_4",label:"Lowball Insurance Offer",desc:"Virtual call. Insurance adjuster presenting offer far below case value. Protect client's interests."},
+    {id:"cm_1",label:"Client Demanding Case Update",desc:"Virtual call. Client has not heard from attorney in two weeks. Personality: Frustrated."},
+    {id:"cm_2",label:"Medical Provider Withholding Records",desc:"Virtual call. Provider refuses to release records without upfront payment."},
+    {id:"cm_3",label:"Settlement Timeline Question",desc:"Virtual call. Client demanding a definite settlement date. Personality: Impatient."},
+    {id:"cm_4",label:"Lowball Insurance Offer",desc:"Virtual call. Insurance adjuster presenting offer far below case value."},
     {id:"cm_5",label:"Client Missing Medical Appointments",desc:"Virtual call. Client has missed three consecutive appointments. Personality: Dismissive."},
-    {id:"cm_6",label:"Discovery Extension Request",desc:"Virtual call. Opposing counsel requesting 30-day extension on discovery. Evaluate and respond."},
-    {id:"cm_7",label:"Client Posting on Social Media",desc:"Virtual call. Client wants to post vacation photos on Instagram while injury case is active."},
-    {id:"cm_8",label:"Medical Bills in Collections",desc:"Virtual call. Client's medical bills went to collections affecting credit. Personality: Panicked."},
+    {id:"cm_6",label:"Discovery Extension Request",desc:"Virtual call. Opposing counsel requesting 30-day extension on discovery."},
+    {id:"cm_7",label:"Client Posting on Social Media",desc:"Virtual call. Client wants to post vacation photos while injury case is active."},
+    {id:"cm_8",label:"Medical Bills in Collections",desc:"Virtual call. Clients medical bills went to collections. Personality: Panicked."},
     {id:"cm_9",label:"Client Requesting Attorney Change",desc:"Virtual call. Client unhappy with assigned attorney and requesting reassignment."},
-    {id:"cm_10",label:"Health Insurance Lien Call",desc:"Virtual call. Health insurer calling to assert subrogation lien on client's potential settlement."},
+    {id:"cm_10",label:"Health Insurance Lien Call",desc:"Virtual call. Health insurer calling to assert subrogation lien on settlement."},
     {id:"cm_11",label:"Client Stopped Medical Treatment",desc:"Virtual call. Client stopped all treatment two months ago. Personality: Resistant."},
-    {id:"cm_12",label:"Second Accident During Active Case",desc:"Virtual call. Client calling from ER after second accident while first case is still open."},
+    {id:"cm_12",label:"Second Accident During Active Case",desc:"Virtual call. Client calling from ER after second accident while first case is open."},
     {id:"cm_13",label:"Unresolved Property Damage",desc:"Virtual call. Client frustrated vehicle property damage not resolved after 90 days."},
     {id:"cm_14",label:"Client Wants to Contact Opposing Party",desc:"Virtual call. Client wants to reach out directly to other driver to settle quickly."},
-    {id:"cm_15",label:"Expert Witness Scheduling Conflict",desc:"Virtual coordination. Expert witness conflicts with deposition date. Multiple parties need rescheduling."},
+    {id:"cm_15",label:"Expert Witness Scheduling Conflict",desc:"Virtual coordination. Expert witness conflicts with deposition date."},
     {id:"cm_16",label:"Client Moving Out of State",desc:"Virtual call. Client relocating mid-case and worried about how it affects their case."},
-    {id:"cm_17",label:"Workers Comp Overlap",desc:"Virtual call. Workers comp insurer calling about overlap between comp and personal injury claims."},
-    {id:"cm_18",label:"Interpreter Needed for Deposition",desc:"Virtual coordination. Deposition in 3 days and client just disclosed needing certified interpreter."},
+    {id:"cm_17",label:"Workers Comp Overlap",desc:"Virtual call. Workers comp insurer calling about overlap with personal injury claims."},
+    {id:"cm_18",label:"Interpreter Needed for Deposition",desc:"Virtual coordination. Deposition in 3 days and client needs certified interpreter."},
     {id:"cm_19",label:"Counter-Claim Filed",desc:"Virtual call. Client panicking after receiving notice opposing party filed counter-claim."},
-    {id:"cm_20",label:"Case Expenses Question",desc:"Virtual call. Client demanding detailed breakdown of all case expenses. Personality: Suspicious."},
+    {id:"cm_20",label:"Case Expenses Question",desc:"Virtual call. Client demanding detailed breakdown of all case expenses."},
     {id:"cm_21",label:"Mediation Preparation Call",desc:"Virtual call. Mediation is next week. Client is nervous and unprepared."},
-    {id:"cm_22",label:"Client Rejecting Reasonable Settlement",desc:"Virtual call. Client angrily rejecting fair offer, demanding trial. Personality: Emotional."},
-    {id:"cm_23",label:"Multiple Defendant Confusion",desc:"Virtual coordination. Three defendants, three insurers creating serious client confusion."},
-    {id:"cm_24",label:"Client Cold Feet Before Trial",desc:"Virtual call. Trial starts tomorrow and client wants to back out. Personality: Scared."},
-    {id:"cm_25",label:"Tax Implications of Settlement",desc:"Virtual call. Client asking if settlement will be taxed. Personality: Worried about losing portion."},
-    {id:"cm_26",label:"Demand Package Preparation",desc:"Virtual task. Attorney asks you to compile full demand package including records and lost wages."},
+    {id:"cm_22",label:"Client Rejecting Reasonable Settlement",desc:"Virtual call. Client angrily rejecting fair offer, demanding trial."},
+    {id:"cm_23",label:"Multiple Defendant Confusion",desc:"Virtual coordination. Three defendants, three insurers creating client confusion."},
+    {id:"cm_24",label:"Client Cold Feet Before Trial",desc:"Virtual call. Trial starts tomorrow and client wants to back out."},
+    {id:"cm_25",label:"Tax Implications of Settlement",desc:"Virtual call. Client asking if settlement will be taxed."},
+    {id:"cm_26",label:"Demand Package Preparation",desc:"Virtual task. Compile full demand package including records and lost wages."},
     {id:"cm_27",label:"Gap in Treatment Explanation",desc:"Virtual call. Client asking why insurance is using their treatment gap against them."},
-    {id:"cm_28",label:"Client Asking About Case Value",desc:"Virtual call. Client demanding to know how much case is worth after hearing big number from friend."},
-    {id:"cm_29",label:"Independent Medical Exam Prep",desc:"Virtual call. Client nervous about defense IME scheduled. Personality: Anxious about what to say."},
-    {id:"cm_30",label:"High-Maintenance Update Requests",desc:"Virtual call. Client demanding weekly calls and emails. Set realistic communication expectations."},
+    {id:"cm_28",label:"Client Asking About Case Value",desc:"Virtual call. Client demanding to know how much case is worth."},
+    {id:"cm_29",label:"Independent Medical Exam Prep",desc:"Virtual call. Client nervous about defense IME. Personality: Anxious."},
+    {id:"cm_30",label:"High-Maintenance Update Requests",desc:"Virtual call. Client demanding weekly calls and emails. Set expectations."},
   ],
   "Receptionist":[
-    {id:"re_1",label:"First-Time Accident Caller",desc:"Virtual call. First-time caller with potential car accident case, unsure if they have a claim. Personality: Confused."},
-    {id:"re_2",label:"Spam Telemarketing Call",desc:"Virtual call. Caller pretending to be a client but is clearly a telemarketer. Handle professionally."},
-    {id:"re_3",label:"Client Demanding Attorney Now",desc:"Virtual call. Existing client demanding immediate connection to their attorney. Personality: Angry."},
-    {id:"re_4",label:"Spanish-Only Caller",desc:"Virtual call. Caller speaking primarily Spanish with limited English and an urgent legal matter."},
-    {id:"re_5",label:"Billing Statement Complaint",desc:"Virtual call. Client upset about billing statement. Personality: Accusatory, claiming overcharging."},
-    {id:"re_6",label:"Media Reporter Calling",desc:"Virtual call. Local news reporter requesting comment on high-profile case. Personality: Persistent."},
-    {id:"re_7",label:"Caller Threatening the Firm",desc:"Virtual call. Caller threatening to report firm to bar association. Personality: Hostile."},
-    {id:"re_8",label:"Wrong Practice Area Caller",desc:"Virtual call. Caller needing divorce attorney at personal injury firm. Personality: Distressed."},
-    {id:"re_9",label:"Confused Elderly Caller",desc:"Virtual call. Elderly caller who thinks they called their doctor's office. Personality: Disoriented."},
+    {id:"re_1",label:"First-Time Accident Caller",desc:"Virtual call. First-time caller with potential car accident case. Personality: Confused."},
+    {id:"re_2",label:"Spam Telemarketing Call",desc:"Virtual call. Caller pretending to be a client but is clearly a telemarketer."},
+    {id:"re_3",label:"Client Demanding Attorney Now",desc:"Virtual call. Existing client demanding immediate connection to attorney. Personality: Angry."},
+    {id:"re_4",label:"Spanish-Only Caller",desc:"Virtual call. Caller speaking primarily Spanish with limited English and urgent matter."},
+    {id:"re_5",label:"Billing Statement Complaint",desc:"Virtual call. Client upset about billing statement. Personality: Accusatory."},
+    {id:"re_6",label:"Media Reporter Calling",desc:"Virtual call. Local news reporter requesting comment on high-profile case."},
+    {id:"re_7",label:"Caller Threatening the Firm",desc:"Virtual call. Caller threatening to report firm to bar association."},
+    {id:"re_8",label:"Wrong Practice Area Caller",desc:"Virtual call. Caller needing divorce attorney at personal injury firm."},
+    {id:"re_9",label:"Confused Elderly Caller",desc:"Virtual call. Elderly caller who thinks they called their doctors office."},
     {id:"re_10",label:"Free Consultation Inquiry",desc:"Virtual call. Caller with multiple questions about the free consultation process."},
     {id:"re_11",label:"Opposing Counsel Calling",desc:"Virtual call. Attorney from opposing firm calling to speak with managing attorney urgently."},
-    {id:"re_12",label:"Court Clerk Missed Filing",desc:"Virtual call. Court clerk calling about missed filing deadline. Situation is time-sensitive."},
-    {id:"re_13",label:"Last-Minute Appointment Cancel",desc:"Virtual call. Client calling 20 minutes before intake to cancel. Personality: Casual and unbothered."},
+    {id:"re_12",label:"Court Clerk Missed Filing",desc:"Virtual call. Court clerk calling about missed filing deadline."},
+    {id:"re_13",label:"Last-Minute Appointment Cancel",desc:"Virtual call. Client calling 20 minutes before intake to cancel."},
     {id:"re_14",label:"Anonymous Case Inquiry",desc:"Virtual call. Caller asking for case updates on a file they are not authorized on."},
-    {id:"re_15",label:"Expired Statute of Limitations",desc:"Virtual call. Caller describing accident from 4 years ago. Statute likely expired. Handle with empathy."},
-    {id:"re_16",label:"Appointment Confirmation Call",desc:"Virtual call. New client confirming intake appointment and asking what documents to bring."},
-    {id:"re_17",label:"Upset About Hold Time",desc:"Virtual call. Client who was on hold 8 minutes is now venting. Personality: Passive-aggressive."},
+    {id:"re_15",label:"Expired Statute of Limitations",desc:"Virtual call. Caller describing accident from 4 years ago. Handle with empathy."},
+    {id:"re_16",label:"Appointment Confirmation Call",desc:"Virtual call. New client confirming intake appointment."},
+    {id:"re_17",label:"Upset About Hold Time",desc:"Virtual call. Client who was on hold 8 minutes is now venting."},
     {id:"re_18",label:"Attorney Unavailable Client Insisting",desc:"Virtual call. Client insisting on speaking only with attorney who is in a deposition."},
-    {id:"re_19",label:"Referral Fee Inquiry",desc:"Virtual call. Caller asking detailed questions about referral fees and personal payment."},
-    {id:"re_20",label:"Criminal Case Wrong Firm",desc:"Virtual call. Caller who just got arrested needs criminal defense. Firm only handles personal injury."},
-    {id:"re_21",label:"Process Server Arriving",desc:"Virtual call. Process server notifying they are en route with legal documents. Handle and route."},
-    {id:"re_22",label:"Overdue Vendor Invoice",desc:"Virtual call. Vendor calling about overdue invoice for office services. Personality: Professional but firm."},
-    {id:"re_23",label:"Client Firing the Firm",desc:"Virtual call. Long-time client calling to terminate representation. Personality: Calm but decided."},
-    {id:"re_24",label:"Abusive Caller",desc:"Virtual call. Caller using aggressive language and profanity. Personality: Threatening and hostile."},
+    {id:"re_19",label:"Referral Fee Inquiry",desc:"Virtual call. Caller asking detailed questions about referral fees."},
+    {id:"re_20",label:"Criminal Case Wrong Firm",desc:"Virtual call. Caller who just got arrested needs criminal defense. Wrong firm."},
+    {id:"re_21",label:"Process Server Arriving",desc:"Virtual call. Process server notifying they are en route with legal documents."},
+    {id:"re_22",label:"Overdue Vendor Invoice",desc:"Virtual call. Vendor calling about overdue invoice for office services."},
+    {id:"re_23",label:"Client Firing the Firm",desc:"Virtual call. Long-time client calling to terminate representation."},
+    {id:"re_24",label:"Abusive Caller",desc:"Virtual call. Caller using aggressive language and profanity."},
     {id:"re_25",label:"Unauthorized Case Status Request",desc:"Virtual call. Caller asking about case status for file they are not listed on."},
-    {id:"re_26",label:"Repeat Frustrated Caller",desc:"Virtual call. This is the 5th call today from same client who feels ignored. Escalating frustration."},
-    {id:"re_27",label:"Complex Multi-Vehicle Accident Lead",desc:"Virtual call. New lead - 5-car pileup with multiple potential defendants. Caller overwhelmed."},
-    {id:"re_28",label:"Contingency Fee Questions",desc:"Virtual call. Caller with detailed questions about contingency fees - percentages and payment timing."},
-    {id:"re_29",label:"Distressed Client Insurance Denial",desc:"Virtual call. Client who just received insurance denial letter and is in tears. Personality: Desperate."},
-    {id:"re_30",label:"High-Value Attorney Referral",desc:"Virtual call. Potential client referred by another attorney. Has high expectations, evaluating the firm."},
+    {id:"re_26",label:"Repeat Frustrated Caller",desc:"Virtual call. This is the 5th call today from same client who feels ignored."},
+    {id:"re_27",label:"Complex Multi-Vehicle Accident Lead",desc:"Virtual call. New lead, 5-car pileup with multiple potential defendants."},
+    {id:"re_28",label:"Contingency Fee Questions",desc:"Virtual call. Caller with detailed questions about contingency fees."},
+    {id:"re_29",label:"Distressed Client Insurance Denial",desc:"Virtual call. Client who just received insurance denial letter and is in tears."},
+    {id:"re_30",label:"High-Value Attorney Referral",desc:"Virtual call. Potential client referred by another attorney with high expectations."},
   ],
 };
+const EMAIL_SCENARIOS = {
+  "Intake Specialist":[
+    {id:"ei_1",label:"Angry Follow-Up After Consultation",subject:"WHERE IS MY CASE UPDATE",from:"Robert Mendez <rmendez@gmail.com>",body:"I came in for a consultation two weeks ago and nobody has called me back. I was in a serious car accident and I need to know if you are taking my case or not. This is unacceptable. I have bills piling up and I cannot wait any longer. Please respond IMMEDIATELY or I will find another firm."},
+    {id:"ei_2",label:"Request for Case Evaluation",subject:"Question about my slip and fall",from:"Linda Park <lindapark55@yahoo.com>",body:"Hello, I slipped and fell at my local grocery store last Thursday. I hurt my back and had to go to urgent care. The store manager filled out an incident report. I am not sure if I have a case or if it is worth pursuing. The medical bills are adding up. Can you help me understand my options?"},
+    {id:"ei_3",label:"Statute of Limitations Panic",subject:"Is it too late for my case",from:"Carlos Rivera <c.rivera@gmail.com>",body:"I was in a motorcycle accident almost 2 years ago. I never hired an attorney because I thought I could handle it myself but the insurance company gave me a very low offer and I rejected it. Someone just told me there is a deadline to file a lawsuit. Is it too late? Please I need help urgently."},
+  ],
+  "Legal Assistant":[
+    {id:"ela_1",label:"Client Demanding Written Update",subject:"I need a written update on my case",from:"Patricia Owens <powens@outlook.com>",body:"I have been calling the office for two weeks and keep getting voicemail. I need a written update on the status of my case. My deposition is coming up and I have no idea what is going on. I am very frustrated with the lack of communication. Please respond today."},
+    {id:"ela_2",label:"Confused About Settlement Offer",subject:"Settlement offer - I have questions",from:"James Whitfield <jwhitfield@gmail.com>",body:"My attorney left me a voicemail saying there is a settlement offer on the table but I could not understand all the details. Can you explain in writing what a settlement means, what I would receive after fees, and what happens if I reject it? I want to understand before I make any decisions."},
+    {id:"ela_3",label:"Request to Reschedule Deposition",subject:"Need to reschedule my deposition",from:"Angela Torres <angelat@gmail.com>",body:"I just found out my deposition is scheduled for next Thursday at 10am. I have a mandatory work training that day that I cannot miss or I will lose my job. Is there any way to reschedule? I apologize for the short notice. I only received the notice today."},
+  ],
+  "Paralegal":[
+    {id:"epl_1",label:"Opposing Counsel Discovery Request",subject:"RE Discovery Deficiencies Case 2024-CV-4421",from:"Susan Hartley Esq <s.hartley@hartleylaw.com>",body:"Dear Counsel, I am writing regarding the discovery responses submitted by your client on October 14th. Several responses are incomplete or evasive, specifically Interrogatories 7, 12, and 15. The document production also did not include the requested surveillance records. Please provide supplemental responses within 14 days or we will be forced to file a motion to compel."},
+    {id:"epl_2",label:"Medical Provider Records Request",subject:"Records Request Patient David Kim",from:"Dr Pamela Cruz <pcruz@orthocare.com>",body:"To Whom It May Concern, We received your records request for the above-referenced patient. Before we can release any records, we require a signed HIPAA authorization, your firms retainer agreement, and payment of our $75 records processing fee. Please note we have a 30-day processing time once all documents are received."},
+    {id:"epl_3",label:"Client Asking About Case Progress",subject:"How much longer will my case take",from:"Michael Santos <msantos@hotmail.com>",body:"Hi, it has been 8 months since my accident and I feel like nothing is happening. I finished all my medical treatment 2 months ago. My friend settled his case in 4 months. Why is mine taking so long? Can you please explain what stage we are in and what still needs to happen?"},
+  ],
+  "Case Manager":[
+    {id:"ecm_1",label:"Client Upset About Low Settlement Offer",subject:"This offer is insulting I want to reject it",from:"Brenda Castillo <brendac@gmail.com>",body:"I just reviewed the settlement offer you forwarded. $18,500? I was out of work for 6 weeks, had 4 months of physical therapy, and still have pain every day. My friend got $85,000 for a similar accident. I want to reject this offer. Please tell me what our next steps are."},
+    {id:"ecm_2",label:"Insurance Adjuster Following Up",subject:"RE Claim 4471-B Settlement Discussion",from:"Tom Bradley Adjuster <t.bradley@allstateins.com>",body:"Good afternoon, I am following up on the settlement demand submitted on behalf of your client. We have reviewed the demand and our current evaluation is $22,000 based on the documented specials and comparative liability. We believe this is a fair offer. Please respond within 10 business days."},
+    {id:"ecm_3",label:"Client Missed IME Appointment",subject:"I couldnt make it to the doctor appointment",from:"Derek Johnson <derekj88@yahoo.com>",body:"Hi I missed the doctor appointment today. I know it was important but my car broke down and I had no way to get there. I tried calling the office but nobody answered. What happens now? Am I in trouble? I am very worried."},
+  ],
+  "Receptionist":[
+    {id:"er_1",label:"General Inquiry About Services",subject:"Do you handle my type of case",from:"Melissa Grant <melgrant@gmail.com>",body:"Hello, I found your firm online and wanted to ask if you handle cases involving dog bites. My neighbors dog attacked me last month and I had to get stitches on my arm. I have photos and a copy of the ER report. I was not sure if this is something you would take on. Thank you for your time."},
+    {id:"er_2",label:"Complaint About Office Experience",subject:"Very disappointed with your office",from:"Harold Fleming <hfleming@hotmail.com>",body:"I visited your office last week for a consultation and I was extremely disappointed. I waited 45 minutes past my appointment time with no explanation. When I was finally seen, the attorney seemed rushed and distracted. I ended up going with another firm."},
+    {id:"er_3",label:"Request to Speak With Attorney",subject:"Need to speak with an attorney today",from:"Rosa Maldonado <rosamaldonado@gmail.com>",body:"Good morning. I was involved in a hit and run accident yesterday evening. The other driver fled the scene. Police came and made a report. I have uninsured motorist coverage. I am in a lot of pain and do not know what to do. I need to speak with an attorney as soon as possible today."},
+  ],
+};
+const DOC_SCENARIOS = [
+  {id:"doc_1",label:"Settlement Demand Letter",docType:"Demand Letter",difficulty:"Intermediate",brief:"CASE: Martinez v. Riverside Insurance Co.\nCLIENT: Sofia Martinez, 34, nurse\nINCIDENT: Rear-end collision March 14 2024. Client stopped at red light when struck by distracted driver.\nINJURIES: Cervical herniation C4-C5, lumbar strain, 6 months physical therapy.\nSPECIALS: Medical bills $42,800. Lost wages $18,600. Future medical $12,000.\nLIABILITY: Clear. Police report confirms citation. Witness statements obtained.\nINSURANCE: Policy limit $100,000. Adjuster unresponsive for 3 weeks.\nTASK: Draft a formal settlement demand letter to the insurance adjuster requesting full policy limits. Include all damages, a 30-day response deadline, and a litigation warning.",requirements:["Formal letter header and date","Clear statement of liability","Itemized damages (medical, lost wages, pain and suffering)","Total demand amount","30-day response deadline","Litigation warning if no response"]},
+  {id:"doc_2",label:"Interrogatories Personal Injury",docType:"Discovery Interrogatories",difficulty:"Advanced",brief:"CASE: Thompson v. Henderson Construction LLC\nCLIENT: Marcus Thompson, 45, electrician\nINCIDENT: Slip and fall on construction site January 8 2024. Wet concrete was unmarked, no safety signs.\nINJURIES: Right knee ACL tear, surgery required, 4 months recovery.\nSTAGE: Discovery. Send interrogatories to defendant.\nTASK: Draft at least 8 interrogatories to Henderson Construction LLC covering safety protocols, prior incidents, employee training, insurance coverage, knowledge of the hazard, and corporate structure.",requirements:["Proper case caption","Numbered interrogatories minimum 8","Covers safety protocols and training","Asks about prior similar incidents","Requests insurance policy information","Includes definitions section"]},
+  {id:"doc_3",label:"Motion to Compel Discovery",docType:"Motion",difficulty:"Advanced",brief:"CASE: Patel v. Greenway Medical Center\nCOURT: Superior Court Los Angeles Case No 2024-CV-08821\nBACKGROUND: Defendant failed to respond to Interrogatories Set One and RFP served 45 days ago. Meet-and-confer letter sent 15 days ago with no response.\nDEADLINE: Discovery cutoff in 60 days.\nTASK: Draft a Motion to Compel with procedural history, legal standard, argument section, proposed order. Request $2,500 in sanctions.",requirements:["Proper court caption and case number","Statement of facts and procedural history","Legal standard for motion to compel","Clear argument section","Request for sanctions with amount","Proposed order","Certificate of service"]},
+  {id:"doc_4",label:"Case Summary for Mediation",docType:"Case Summary",difficulty:"Intermediate",brief:"CASE: Wilson v. Pacific Auto Group\nCLIENT: Jerome Wilson, 58, retired teacher\nINCIDENT: Client purchased vehicle with undisclosed prior accident history. Dealer fraudulently misrepresented condition.\nDAMAGES: Vehicle value loss $14,200. Repairs $3,800. Emotional distress.\nMEDIATION: In 5 days with JAMS mediator.\nPRIOR OFFER: Defendant offered $8,000 rejected.\nCURRENT DEMAND: $32,000.\nTASK: Draft a concise case summary for the mediator including background, liability, damages breakdown, negotiation history, and current demand.",requirements:["Executive summary paragraph","Clear liability theory","Itemized damages","History of settlement negotiations","Current demand with justification","Client goals and priorities"]},
+  {id:"doc_5",label:"Request for Production of Documents",docType:"Discovery RFP",difficulty:"Intermediate",brief:"CASE: Nguyen v. Eastside Property Management\nCLIENT: Kim Nguyen, 29\nINCIDENT: Fell in poorly lit parking garage October 3 2023. Broken wrist and ankle sprain.\nSTAGE: Early discovery.\nTASK: Draft a Request for Production of Documents to Eastside Property Management. Request at least 10 categories including maintenance records, prior incident reports, lighting inspection records, surveillance footage, and insurance policies.",requirements:["Proper case caption","Clear definitions section","Numbered document requests minimum 10","Covers maintenance and inspection records","Requests surveillance footage","Asks for prior incident reports","Requests all insurance policies"]},
+  {id:"doc_6",label:"Client Retainer Agreement Summary",docType:"Client Communication",difficulty:"Beginner",brief:"NEW CLIENT: David Okafor, 41\nCASE TYPE: Dog bite, serious lacerations requiring surgery and skin grafting.\nINCIDENT: April 2 2024. Neighbors dog attacked client in public park.\nRETAINER: 33% contingency pre-litigation, 40% if litigation required.\nTASK: Draft a plain-language summary letter explaining retainer terms, case process, dos and donts, and next steps.",requirements:["Warm and professional tone","Clear explanation of contingency fee","Explanation of client costs","Dos and donts section","Case process overview","Next steps and contact information"]},
+  {id:"doc_7",label:"Deposition Summary Memorandum",docType:"Internal Memo",difficulty:"Intermediate",brief:"CASE: Flores v. Metro Transit Authority\nDEPOSITION: Expert witness Dr Alan Roth, biomechanical engineer, April 15 2024. Duration 3.5 hours.\nKEY TESTIMONY: Dr Roth testified forces in the collision were sufficient to cause herniated discs. Acknowledged he did not inspect vehicles. Stood firm on causation. Defense tried to impeach with a prior excluded opinion.\nTASK: Draft an internal memo summarizing testimony, key admissions, vulnerabilities, and your recommendation on whether to use him at trial.",requirements:["Memo header To From Date Re","Summary of key direct testimony","Summary of cross-examination","Key admissions and vulnerabilities","Witness credibility assessment","Clear recommendation on trial use"]},
+  {id:"doc_8",label:"Stipulation to Continue Trial Date",docType:"Stipulation",difficulty:"Beginner",brief:"CASE: Anderson v. Sunrise Hotels LLC\nCOURT: Superior Court San Diego Case No 2023-CV-11042\nCURRENT TRIAL DATE: June 3 2025\nREASON: Expert Dr Sarah Chen unavailable June 3-20. Both parties agreed to 45-day continuance.\nNEW DATE: July 22 2025\nTASK: Draft a joint Stipulation and Proposed Order to continue the trial date.",requirements:["Proper court caption","Recitals explaining reason for continuance","Clear stipulation language","Both parties signature blocks","Proposed order for judge","Correct new trial date"]},
+  {id:"doc_9",label:"Mediation Brief",docType:"Mediation Brief",difficulty:"Advanced",brief:"CASE: Robinson v. Clearwater Insurance Co.\nCLIENT: Tanya Robinson, 39, school administrator\nINCIDENT: June 7 2023. Struck by uninsured driver who ran a red light.\nINJURIES: Mild TBI, post-concussion syndrome, cognitive issues affecting work.\nSPECIALS: Medical $89,400. Future care $45,000. Lost earning capacity $120,000.\nPRIOR OFFER: $95,000 rejected.\nSETTLEMENT RANGE: $285,000 to $350,000.\nTASK: Draft a confidential mediation brief for the mediator only. Be candid about strengths AND weaknesses.",requirements:["Confidential header","Strong liability narrative","Detailed damages with supporting evidence","Honest assessment of case weaknesses","History of negotiations","Specific settlement range with justification"]},
+  {id:"doc_10",label:"HIPAA Authorization and Records Request",docType:"Records Request",difficulty:"Beginner",brief:"CLIENT: Rosa Delgado, 52\nTREATMENT PROVIDERS: St Marys Hospital ER and 3-day admission, Dr Kevin Park orthopedic surgeon, Sunrise Physical Therapy 4 months.\nINCIDENT: Slip and fall at supermarket September 12 2023.\nTASK: Draft a formal records request letter to St Marys Hospital for all records from September 12 2023 through present. Include HIPAA authorization language, specific record types, and delivery instructions.",requirements:["Formal letter header","Patient identifying information","Specific date range for records","List of specific record types requested","HIPAA authorization language","Billing records request","Delivery instructions and contact info"]},
+];
 
 async function callClaude(messages, systemPrompt) {
   const res = await fetch("/api/chat", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
+    method:"POST", headers:{"Content-Type":"application/json"},
     body:JSON.stringify({messages, systemPrompt}),
   });
   const data = await res.json();
@@ -144,39 +193,59 @@ async function callClaude(messages, systemPrompt) {
   return data.text;
 }
 
+async function speakElevenLabs(text, onEnd) {
+  try {
+    const res = await fetch("/api/speak", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text}),
+    });
+    if (!res.ok) throw new Error("ElevenLabs failed");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => { URL.revokeObjectURL(url); if (onEnd) onEnd(); };
+    audio.onerror = () => { URL.revokeObjectURL(url); fallbackSpeak(text, onEnd); };
+    await audio.play();
+  } catch(e) { fallbackSpeak(text, onEnd); }
+}
+
+function fallbackSpeak(text, onEnd) {
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v=>v.lang==="en-US"&&v.localService)||voices.find(v=>v.lang==="en-US");
+  if (preferred) utt.voice = preferred;
+  utt.lang="en-US"; utt.rate=0.9; utt.pitch=1.0; utt.volume=1.0;
+  if (onEnd) utt.onend = onEnd;
+  window.speechSynthesis.speak(utt);
+}
+
 function buildSysPrompt(position, scenario) {
-  return `You are simulating a real virtual interaction at a legal staffing firm.
-ROLE: Act as ${position==="Paralegal"?"a supervising attorney":position==="Case Manager"?"a client, medical provider, or opposing counsel as appropriate":"a caller or client"} for this scenario.
+  return `You are simulating a real phone call at a legal staffing firm. This is a VOICE conversation.
+ROLE: Act as ${position==="Paralegal"?"a supervising attorney":position==="Case Manager"?"a client, medical provider, or opposing counsel":"a caller or client"} for this scenario.
 SCENARIO: ${scenario.desc}
-INSTRUCTIONS:
-- Open with a realistic first message that sets the scene
-- Be natural and stay fully in character
-- Reveal information gradually only when VA asks appropriate questions
-- Match the personality described
-- Keep responses to 2-4 sentences
-DO NOT break character or provide feedback during the conversation.`;
+INSTRUCTIONS: Keep ALL responses under 3 sentences. Speak naturally as if on a real phone call. No bullet points. Match the personality described. Reveal information gradually.
+DO NOT break character or provide feedback.`;
 }
 
 function buildEvalPrompt(vaName, position, sessions) {
   const transcripts = sessions.map((s,i)=>`SCENARIO ${i+1}: ${s.scenario.label}\n${s.transcript}`).join("\n\n---\n\n");
-  return `You are a senior legal staffing trainer evaluating a virtual assistant's performance across multiple training scenarios.
-VA NAME: ${vaName}
-POSITION: ${position}
-SCENARIOS COMPLETED: ${sessions.length}
+  return `You are a senior legal staffing trainer evaluating a virtual assistant.
+VA NAME: ${vaName} | POSITION: ${position} | SCENARIOS: ${sessions.length}
 TRANSCRIPTS:\n${transcripts}
-EVALUATION CRITERIA for ${position}:\n${CRITERIA[position]}
+CRITERIA:\n${CRITERIA[position]}
 OUTPUT FORMAT (use exactly this):
 OVERALL SCORE: [X/10]
 STRENGTHS:
-• [point]
-• [point]
+- [point]
+- [point]
 WEAKNESSES:
-• [point]
-• [point]
+- [point]
+- [point]
 MISSED OPPORTUNITIES:
-• [specific item]
+- [item]
 SUGGESTED IMPROVED RESPONSES:
-• [rewritten example]
+- [example]
 FINAL RECOMMENDATION:
 [2-3 sentences of specific actionable coaching for ${vaName}]`;
 }
@@ -185,147 +254,71 @@ function parseEval(text) {
   const score = text.match(/OVERALL SCORE:\s*([^\n]+)/)?.[1]?.trim();
   const section = (label) => {
     const re = new RegExp(`${label}:\\n([\\s\\S]*?)(?=\\n[A-Z ]+:|$)`);
-    return text.match(re)?.[1]?.trim().split("\n").map(l=>l.replace(/^[•\-]\s*/,"").trim()).filter(Boolean)||[];
+    return text.match(re)?.[1]?.trim().split("\n").map(l=>l.replace(/^[•-]\s*/,"").trim()).filter(Boolean)||[];
   };
   const rec = text.match(/FINAL RECOMMENDATION:\n([\s\S]*?)$/)?.[1]?.trim();
   return {score, strengths:section("STRENGTHS"), weaknesses:section("WEAKNESSES"), missed:section("MISSED OPPORTUNITIES"), suggested:section("SUGGESTED IMPROVED RESPONSES"), rec};
-}
-
-function generatePDF(vaName, vaPosition, sessions, evaluationText) {
-  const e = parseEval(evaluationText);
-  const scoreNum = parseFloat(e.score);
-  const date = new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
-  const W=595,H=842,MG=50;
-  const purple=[0.576,0.2,0.918];
-  const lpurp=[0.98,0.97,1.0];
-  const gray=[0.42,0.45,0.50];
-  const dark=[0.07,0.07,0.07];
-  const scoreC=scoreNum>=8?[0.086,0.639,0.29]:scoreNum>=5?[0.851,0.467,0.024]:[0.937,0.267,0.267];
-  const r3=n=>n.toFixed(3);
-  const norm=s=>String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\x20-\x7E]/g,"?");
-  const esc=s=>norm(s).replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)");
-  const wrap=(txt,pts,sz)=>{
-    const mc=Math.floor(pts/(sz*0.52));
-    const words=norm(txt).split(" ");
-    const ls=[];let ln="";
-    for(const w of words){if(ln&&(ln+" "+w).length>mc){ls.push(ln);ln=w;}else ln=ln?ln+" "+w:w;}
-    if(ln)ls.push(ln);
-    return ls.length?ls:[""];
-  };
-  const fR=([r,g,b],x,y,w,h)=>`${r3(r)} ${r3(g)} ${r3(b)} rg ${r3(x)} ${r3(y)} ${r3(w)} ${r3(h)} re f 0 0 0 rg\n`;
-  const sR=([r,g,b],x,y,w,h)=>`0.50 w ${r3(r)} ${r3(g)} ${r3(b)} RG ${r3(x)} ${r3(y)} ${r3(w)} ${r3(h)} re S 0 0 0 RG\n`;
-  const ln2=([r,g,b],x1,y1,x2,y2)=>`0.50 w ${r3(r)} ${r3(g)} ${r3(b)} RG ${r3(x1)} ${r3(y1)} m ${r3(x2)} ${r3(y2)} l S 0 0 0 RG\n`;
-  const tx=(x,y,str,sz,bold,c=dark)=>`BT /${bold?"FB":"F"} ${sz} Tf ${r3(c[0])} ${r3(c[1])} ${r3(c[2])} rg 1 0 0 1 ${r3(x)} ${r3(y)} Tm (${esc(str)}) Tj ET\n`;
-  const pages=[];let s="",cy=H-30;
-  const np=()=>{pages.push(s);s="";cy=H-30;};
-  const chk=n=>{if(cy-n<65)np();};
-  s+=fR(purple,0,H-65,W,65);
-  s+=tx(MG,H-32,"Legal Staff NOW",18,1,[1,1,1]);
-  s+=tx(MG,H-48,"AI TRAINING SIMULATOR - PERFORMANCE REPORT",8,0,[0.85,0.85,1]);
-  s+=tx(W-MG-130,H-32,date,8,0,[0.85,0.85,1]);
-  s+=tx(W-MG-130,H-48,"CONFIDENTIAL",8,1,[0.85,0.85,1]);
-  cy=H-82;
-  s+=fR(lpurp,MG,cy-36,W-MG*2,42);
-  s+=fR(purple,MG,cy-36,3,42);
-  s+=tx(MG+10,cy-13,norm(vaName),15,1,dark);
-  s+=tx(MG+10,cy-27,norm(vaPosition)+" | "+date,9,0,gray);
-  cy-=54;
-  s+=sR([0.88,0.88,0.88],MG,cy-60,W-MG*2,66);
-  s+=tx(W/2-62,cy-15,"OVERALL TRAINING SCORE",9,1,purple);
-  s+=tx(W/2-20,cy-48,e.score||"-",30,1,scoreC);
-  s+=tx(W/2-46,cy-59,sessions.length+" scenarios completed",9,0,gray);
-  cy-=76;
-  s+=tx(MG,cy,"Scenarios Completed",11,1,dark);
-  s+=ln2(purple,MG,cy-4,W-MG,cy-4);
-  cy-=16;
-  sessions.forEach((sc,i)=>{
-    const dl=wrap(sc.scenario.desc.split(".")[0]+".",W-MG*2-28,8);
-    chk(14+dl.length*10);
-    s+=tx(MG+5,cy,(i+1)+".  "+norm(sc.scenario.label),9,1,dark);
-    cy-=12;
-    dl.forEach(l=>{s+=tx(MG+15,cy,l,8,0,gray);cy-=10;});
-    cy-=4;
-  });
-  cy-=8;
-  const sec=(title,items,col)=>{
-    if(!items||!items.length)return;
-    chk(22);
-    s+=tx(MG,cy,title,11,1,col);
-    s+=ln2(col,MG,cy-4,W-MG,cy-4);
-    cy-=16;
-    items.forEach(item=>{
-      const ls=wrap("- "+item,W-MG*2-14,9);
-      chk(ls.length*11+6);
-      ls.forEach(l=>{s+=tx(MG+8,cy,l,9,0,[0.15,0.2,0.25]);cy-=11;});
-      cy-=3;
-    });
-    cy-=8;
-  };
-  sec("Strengths",e.strengths,[0.086,0.639,0.29]);
-  sec("Areas for Improvement",e.weaknesses,[0.851,0.467,0.024]);
-  sec("Missed Opportunities",e.missed,[0.918,0.345,0.047]);
-  sec("Suggested Improved Responses",e.suggested,purple);
-  if(e.rec){
-    const rl=wrap(e.rec,W-MG*2-18,9);
-    chk(rl.length*11+32);
-    s+=tx(MG,cy,"Final Recommendation",11,1,dark);
-    s+=ln2([0.85,0.85,0.85],MG,cy-4,W-MG,cy-4);
-    cy-=14;
-    s+=fR(lpurp,MG,cy-rl.length*11-6,W-MG*2,rl.length*11+12);
-    rl.forEach(l=>{s+=tx(MG+8,cy,l,9,0,[0.15,0.2,0.25]);cy-=11;});
-  }
-  pages.push(s);
-  const N=pages.length;
-  const footer=pg=>tx(MG,32,"Legal Staff NOW  |  AI Training Simulator  |  Confidential",8,0,gray)+tx(W-MG-28,32,"Page "+pg+" of "+N,8,0,gray);
-  const F=1,FB=2,RES=3;
-  const SIDS=Array.from({length:N},(_,i)=>4+i);
-  const PGIDS=Array.from({length:N},(_,i)=>4+N+i);
-  const PGSID=4+2*N,CATID=4+2*N+1,TOTAL=CATID+1;
-  const objs={};
-  objs[F]="<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
-  objs[FB]="<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
-  objs[RES]="<< /Font << /F "+F+" 0 R /FB "+FB+" 0 R >> >>";
-  pages.forEach((ps,i)=>{
-    const full=ps+footer(i+1);
-    objs[SIDS[i]]="<< /Length "+full.length+" >>\nstream\n"+full+"\nendstream";
-    objs[PGIDS[i]]="<< /Type /Page /MediaBox [0 0 "+W+" "+H+"] /Resources "+RES+" 0 R /Contents "+SIDS[i]+" 0 R /Parent "+PGSID+" 0 R >>";
-  });
-  objs[PGSID]="<< /Type /Pages /Kids ["+PGIDS.map(id=>id+" 0 R").join(" ")+"] /Count "+N+" >>";
-  objs[CATID]="<< /Type /Catalog /Pages "+PGSID+" 0 R >>";
-  let out="%PDF-1.4\n";
-  const offs={};
-  for(let i=1;i<TOTAL;i++){offs[i]=out.length;out+=i+" 0 obj\n"+objs[i]+"\nendobj\n";}
-  const xp=out.length;
-  out+="xref\n0 "+TOTAL+"\n0000000000 65535 f \n";
-  for(let i=1;i<TOTAL;i++)out+=String(offs[i]).padStart(10,"0")+" 00000 n \n";
-  out+="trailer\n<< /Size "+TOTAL+" /Root "+CATID+" 0 R >>\nstartxref\n"+xp+"\n%%EOF";
-  const blob=new Blob([new TextEncoder().encode(out)],{type:"application/pdf"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;a.download=norm(vaName).replace(/\s+/g,"_")+"_Training_Report.pdf";
-  document.body.appendChild(a);a.click();
-  document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 function Logo() {
   return (
     <div style={{display:"flex",flexDirection:"column",gap:2}}>
       <div style={{display:"flex",alignItems:"baseline"}}>
-        <span style={{fontSize:28,fontWeight:900,fontStyle:"italic",color:"#111",fontFamily:"Georgia,serif"}}>Legal Staff&nbsp;</span>
-        <span style={{fontSize:28,fontWeight:900,fontStyle:"italic",fontFamily:"Georgia,serif",background:GRAD,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>NOW</span>
+        <span style={{fontSize:26,fontWeight:900,fontStyle:"italic",color:"#111",fontFamily:"Georgia,serif"}}>Legal Staff&nbsp;</span>
+        <span style={{fontSize:26,fontWeight:900,fontStyle:"italic",fontFamily:"Georgia,serif",background:GRAD,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>NOW</span>
       </div>
       <span style={{fontSize:10,fontWeight:700,letterSpacing:"0.15em",textTransform:"uppercase",color:"#9333ea"}}>AI Training Simulator</span>
     </div>
   );
 }
 
-function TypingIndicator() {
+function TypingDots() {
   return (
-    <div style={{display:"flex",gap:4,padding:"12px 16px",background:"white",borderRadius:16,borderTopLeftRadius:4,border:"1px solid #e5e7eb",width:"fit-content"}}>
-      {[0,150,300].map((d,i)=><span key={i} style={{width:8,height:8,borderRadius:"50%",background:"#9333ea",display:"block",animation:"bounce 0.8s "+d+"ms infinite"}}/>)}
+    <div style={{display:"flex",gap:4,padding:"10px 14px",background:"white",borderRadius:14,borderTopLeftRadius:4,border:"1px solid #e5e7eb",width:"fit-content"}}>
+      {[0,150,300].map((d,i)=><span key={i} style={{width:7,height:7,borderRadius:"50%",background:"#9333ea",display:"block",animation:`pulse 0.8s ${d}ms infinite`}}/>)}
     </div>
   );
+}
+
+function ScoreCard({score,label,color}) {
+  const n=parseFloat(score);
+  const c=n>=8?"#16a34a":n>=5?"#d97706":"#ef4444";
+  return <div style={{...card,textAlign:"center"}}><div style={{fontSize:11,fontWeight:700,color,marginBottom:4,textTransform:"uppercase",letterSpacing:"0.12em"}}>{label}</div><div style={{fontSize:72,fontWeight:900,lineHeight:1,color:c}}>{score}</div></div>;
+}
+
+function ProgressCard({count,total,color,label,onEvaluate,evalLabel}) {
+  return (
+    <div style={{...card,padding:"20px 24px"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:16}}>
+        <div>
+          <p style={{margin:0,fontSize:12,color,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>{label}</p>
+          <p style={{margin:"4px 0 0",fontSize:22,fontWeight:800,color:"#111"}}>{count} <span style={{fontSize:14,color:"#6b7280",fontWeight:400}}>of {total}</span></p>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          {Array.from({length:total}).map((_,i)=>(
+            <div key={i} style={{width:38,height:38,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:i<count?16:13,fontWeight:700,background:i<count?color:"white",color:i<count?"white":"#d1d5db",border:i<count?"none":"2px solid #e5e7eb"}}>{i<count?"✓":i+1}</div>
+          ))}
+        </div>
+      </div>
+      {count>=total?<div style={{borderTop:"1px solid #f0f0f0",paddingTop:16}}><button onClick={onEvaluate} style={{padding:"13px 20px",fontSize:14,fontWeight:700,borderRadius:10,border:"none",color:"white",background:color,cursor:"pointer",width:"100%"}}>{evalLabel}</button></div>:<p style={{margin:0,fontSize:13,color:"#9ca3af",borderTop:"1px solid #f0f0f0",paddingTop:12}}>Complete {total-count} more to unlock your evaluation</p>}
+    </div>
+  );
+}
+
+function ResultSections({e}) {
+  return [
+    {title:"Strengths",items:e.strengths,color:"#16a34a"},
+    {title:"Areas for Improvement",items:e.weaknesses,color:"#d97706"},
+    {title:"Missed Opportunities",items:e.missed,color:"#ea580c"},
+    {title:"Suggested Responses",items:e.suggested,color:"#9333ea"},
+  ].map(({title,items,color})=>items?.length>0&&(
+    <div key={title} style={card}>
+      <h3 style={{margin:"0 0 12px",color,fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>{title}</h3>
+      <ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:8}}>
+        {items.map((item,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db",flexShrink:0}}>—</span><span>{item}</span></li>)}
+      </ul>
+    </div>
+  ));
 }
 
 function App() {
@@ -335,50 +328,189 @@ function App() {
   const [currentScenario,setCurrentScenario]=useState(null);
   const [completedSessions,setCompletedSessions]=useState([]);
   const [messages,setMessages]=useState([]);
-  const [input,setInput]=useState("");
   const [aiLoading,setAiLoading]=useState(false);
   const [evaluation,setEvaluation]=useState(null);
+  const [isListening,setIsListening]=useState(false);
+  const [isSpeaking,setIsSpeaking]=useState(false);
+  const [transcript,setTranscript]=useState("");
+  const [statusMsg,setStatusMsg]=useState("");
+  const [emailScenario,setEmailScenario]=useState(null);
+  const [emailReply,setEmailReply]=useState("");
+  const [emailFeedback,setEmailFeedback]=useState(null);
+  const [completedEmails,setCompletedEmails]=useState([]);
+  const [docScenario,setDocScenario]=useState(null);
+  const [docDraft,setDocDraft]=useState("");
+  const [docFeedback,setDocFeedback]=useState(null);
+  const [completedDocs,setCompletedDocs]=useState([]);
   const chatEndRef=useRef(null);
-  useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"});},[messages,aiLoading]);
+  const recognitionRef=useRef(null);
+
+  useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"});},[messages,aiLoading,isSpeaking]);
+  useEffect(()=>{
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR)return;
+    const rec=new SR();
+    rec.continuous=false; rec.interimResults=true; rec.lang="en-US";
+    rec.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join("");setTranscript(t);};
+    rec.onend=()=>setIsListening(false);
+    rec.onerror=()=>{setIsListening(false);setStatusMsg("Microphone error. Please allow microphone access in Chrome.");};
+    recognitionRef.current=rec;
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+  },[]);
+
+  function reset() {
+    window.speechSynthesis.cancel();
+    setVaName(""); setVaPosition(""); setPhase("welcome");
+    setCurrentScenario(null); setCompletedSessions([]); setMessages([]);
+    setAiLoading(false); setEvaluation(null); setIsListening(false); setIsSpeaking(false);
+    setTranscript(""); setStatusMsg("");
+    setEmailScenario(null); setEmailReply(""); setEmailFeedback(null); setCompletedEmails([]);
+    setDocScenario(null); setDocDraft(""); setDocFeedback(null); setCompletedDocs([]);
+  }
+
   const usedIds=completedSessions.map(s=>s.scenario.id);
   const available=vaPosition?(SCENARIOS[vaPosition]||[]).filter(s=>!usedIds.includes(s.id)):[];
+  const emailPool=(EMAIL_SCENARIOS[vaPosition]||[]).filter(s=>!completedEmails.find(e=>e.id===s.id));
+  const docPool=DOC_SCENARIOS.filter(s=>!completedDocs.find(d=>d.id===s.id));
 
-  async function startScenario(sc){
-    setCurrentScenario(sc);setMessages([]);setPhase("chat");setAiLoading(true);
-    const text=await callClaude([{role:"user",content:"Begin the scenario. Send your opening message now."}],buildSysPrompt(vaPosition,sc));
-    setMessages([{role:"ai",text}]);setAiLoading(false);
+  async function startScenario(sc) {
+    setCurrentScenario(sc); setMessages([]); setTranscript(""); setPhase("chat"); setAiLoading(true);
+    setStatusMsg("Connecting your call...");
+    const text=await callClaude([{role:"user",content:"Begin the scenario. You speak first."}],buildSysPrompt(vaPosition,sc));
+    setMessages([{role:"ai",text}]); setAiLoading(false); setIsSpeaking(true);
+    setStatusMsg("Client is speaking...");
+    speakElevenLabs(text,()=>{setIsSpeaking(false);setStatusMsg("Your turn — click the mic to speak");});
   }
-  async function sendMessage(){
-    const text=input.trim();if(!text||aiLoading)return;
-    setInput("");
+
+  function toggleListening() {
+    if(isSpeaking||aiLoading)return;
+    if(isListening){
+      recognitionRef.current?.stop(); setIsListening(false);
+      if(transcript.trim())sendVoiceMessage(transcript.trim());
+    } else {
+      setTranscript(""); setIsListening(true);
+      setStatusMsg("Listening... click mic again when done");
+      try{recognitionRef.current?.start();}catch(e){}
+    }
+  }
+
+  async function sendVoiceMessage(text) {
+    if(!text||aiLoading)return;
+    setTranscript("");
     const newMsgs=[...messages,{role:"user",text}];
-    setMessages(newMsgs);setAiLoading(true);
+    setMessages(newMsgs); setAiLoading(true); setStatusMsg("Client is thinking...");
     const apiMsgs=[
-      {role:"user",content:"Begin the scenario. Send your opening message now."},
+      {role:"user",content:"Begin the scenario. You speak first."},
       ...newMsgs.flatMap((m,i)=>(i===0&&m.role==="ai")||m.role==="ai"?[{role:"assistant",content:m.text}]:[{role:"user",content:m.text}]),
     ];
     const aiText=await callClaude(apiMsgs,buildSysPrompt(vaPosition,currentScenario));
-    setMessages([...newMsgs,{role:"ai",text:aiText}]);setAiLoading(false);
+    setMessages([...newMsgs,{role:"ai",text:aiText}]); setAiLoading(false); setIsSpeaking(true);
+    setStatusMsg("Client is speaking...");
+    speakElevenLabs(aiText,()=>{setIsSpeaking(false);setStatusMsg("Your turn — click the mic to speak");});
   }
-  function endScenario(){
-    const transcript=messages.map(m=>(m.role==="user"?"VA":"SIMULATION")+": "+m.text).join("\n\n");
-    setCompletedSessions(prev=>[...prev,{scenario:currentScenario,transcript}]);
-    setCurrentScenario(null);setMessages([]);setPhase("dashboard");
+
+  function endScenario() {
+    window.speechSynthesis.cancel();
+    const t=messages.map(m=>`${m.role==="user"?"VA":"CLIENT"}: ${m.text}`).join("\n\n");
+    setCompletedSessions(prev=>[...prev,{scenario:currentScenario,transcript:t}]);
+    setCurrentScenario(null); setMessages([]); setTranscript(""); setStatusMsg(""); setPhase("voice-dashboard");
   }
-  async function getEvaluation(){
+
+  async function getVoiceEval() {
     setPhase("evaluating");
-    const evalText=await callClaude([{role:"user",content:"Evaluate this VA training session."}],buildEvalPrompt(vaName,vaPosition,completedSessions));
-    setEvaluation(evalText);setPhase("results");
+    const evalText=await callClaude([{role:"user",content:"Evaluate this VA voice training session."}],buildEvalPrompt(vaName,vaPosition,completedSessions));
+    setEvaluation(evalText); setPhase("results");
   }
-  function reset(){setVaName("");setVaPosition("");setPhase("welcome");setCurrentScenario(null);setCompletedSessions([]);setMessages([]);setInput("");setEvaluation(null);}
+
+  async function submitEmailReply() {
+    if(!emailReply.trim()||aiLoading)return;
+    setAiLoading(true);
+    const prompt=`You are a senior legal staffing trainer evaluating an email response.
+VA NAME: ${vaName} | POSITION: ${vaPosition} | SCENARIO: ${emailScenario.label}
+ORIGINAL EMAIL:\nFrom: ${emailScenario.from}\nSubject: ${emailScenario.subject}\n${emailScenario.body}
+VA RESPONSE:\n${emailReply}
+CRITERIA:\n${EMAIL_CRITERIA[vaPosition]}
+OUTPUT FORMAT:
+SCORE: [X/10]
+STRENGTHS:
+- [point]
+IMPROVEMENTS:
+- [point]
+SUGGESTED RESPONSE:
+[Write a model response]
+COACHING TIP:
+[One specific actionable tip]`;
+    const res=await callClaude([{role:"user",content:"Evaluate this email response."}],prompt);
+    setEmailFeedback(res);
+    setCompletedEmails(prev=>[...prev,{...emailScenario,vaReply:emailReply,feedback:res}]);
+    setAiLoading(false); setPhase("email-feedback");
+  }
+
+  function parseEmailFeedback(text) {
+    const score=text.match(/SCORE:\s*([^\n]+)/)?.[1]?.trim();
+    const strengths=text.match(/STRENGTHS:\n([\s\S]*?)(?=\nIMPROVEMENTS:)/)?.[1]?.trim().split("\n").map(l=>l.replace(/^[•-]\s*/,"").trim()).filter(Boolean)||[];
+    const improvements=text.match(/IMPROVEMENTS:\n([\s\S]*?)(?=\nSUGGESTED RESPONSE:)/)?.[1]?.trim().split("\n").map(l=>l.replace(/^[•-]\s*/,"").trim()).filter(Boolean)||[];
+    const suggested=text.match(/SUGGESTED RESPONSE:\n([\s\S]*?)(?=\nCOACHING TIP:)/)?.[1]?.trim();
+    const tip=text.match(/COACHING TIP:\n([\s\S]*?)$/)?.[1]?.trim();
+    return{score,strengths,improvements,suggested,tip};
+  }
+
+  async function getEmailEval() {
+    setPhase("evaluating");
+    const allT=completedEmails.map((e,i)=>`EMAIL ${i+1}: ${e.label}\nOriginal: ${e.body}\nVA Response: ${e.vaReply}`).join("\n\n---\n\n");
+    const prompt=`You are evaluating a VA email communication skills.\nVA: ${vaName} | POSITION: ${vaPosition}\n${allT}\nCRITERIA:\n${EMAIL_CRITERIA[vaPosition]}\nOUTPUT FORMAT:\nOVERALL SCORE: [X/10]\nSTRENGTHS:\n• [point]\nWEAKNESSES:\n• [point]\nMISSED OPPORTUNITIES:\n• [item]\nSUGGESTED IMPROVED RESPONSES:\n• [example]\nFINAL RECOMMENDATION:\n[2-3 sentences]`;
+    const evalText=await callClaude([{role:"user",content:"Evaluate."}],prompt);
+    setEvaluation(evalText); setPhase("results");
+  }
+
+  async function submitDocDraft() {
+    if(!docDraft.trim()||aiLoading)return;
+    setAiLoading(true);
+    const prompt=`You are a supervising attorney reviewing a paralegal document draft.
+PARALEGAL: ${vaName} | DOCUMENT: ${docScenario.docType} | ASSIGNMENT: ${docScenario.label}
+CASE BRIEF:\n${docScenario.brief}
+REQUIRED ELEMENTS:\n${docScenario.requirements.map((r,i)=>`${i+1}. ${r}`).join("\n")}
+DRAFT:\n${docDraft}
+CRITERIA:\n${DOC_CRITERIA}
+OUTPUT FORMAT:
+SCORE: [X/10]
+ELEMENTS CHECKLIST:
+${docScenario.requirements.map(r=>`- ${r}: [Present/Missing/Incomplete]`).join("\n")}
+STRENGTHS:
+- [point]
+REVISIONS NEEDED:
+- [revision]
+ATTORNEY NOTES:
+[2-3 sentences as supervising attorney]`;
+    const res=await callClaude([{role:"user",content:"Review this draft."}],prompt);
+    setDocFeedback(res);
+    setCompletedDocs(prev=>[...prev,{...docScenario,draft:docDraft,feedback:res}]);
+    setAiLoading(false); setPhase("doc-feedback");
+  }
+
+  function parseDocFeedback(text) {
+    const score=text.match(/SCORE:\s*([^\n]+)/)?.[1]?.trim();
+    const checklist=text.match(/ELEMENTS CHECKLIST:\n([\s\S]*?)(?=\nSTRENGTHS:)/)?.[1]?.trim().split("\n").map(l=>l.replace(/^-\s*/,"").trim()).filter(Boolean)||[];
+    const strengths=text.match(/STRENGTHS:\n([\s\S]*?)(?=\nREVISIONS NEEDED:)/)?.[1]?.trim().split("\n").map(l=>l.replace(/^[•-]\s*/,"").trim()).filter(Boolean)||[];
+    const revisions=text.match(/REVISIONS NEEDED:\n([\s\S]*?)(?=\nATTORNEY NOTES:)/)?.[1]?.trim().split("\n").map(l=>l.replace(/^[•-]\s*/,"").trim()).filter(Boolean)||[];
+    const notes=text.match(/ATTORNEY NOTES:\n([\s\S]*?)$/)?.[1]?.trim();
+    return{score,checklist,strengths,revisions,notes};
+  }
+
+  async function getDocEval() {
+    setPhase("evaluating");
+    const allD=completedDocs.map((d,i)=>`DOC ${i+1}: ${d.label}\nDraft: ${d.draft.substring(0,300)}...`).join("\n\n---\n\n");
+    const prompt=`You are a supervising attorney providing final evaluation.\nPARALEGAL: ${vaName}\n${allD}\nCRITERIA:\n${DOC_CRITERIA}\nOUTPUT FORMAT:\nOVERALL SCORE: [X/10]\nSTRENGTHS:\n• [point]\nWEAKNESSES:\n• [point]\nMISSED OPPORTUNITIES:\n• [item]\nSUGGESTED IMPROVED RESPONSES:\n• [example]\nFINAL RECOMMENDATION:\n[2-3 sentences]`;
+    const evalText=await callClaude([{role:"user",content:"Evaluate."}],prompt);
+    setEvaluation(evalText); setPhase("results");
+  }
 
   const e=evaluation?parseEval(evaluation):null;
-  const scoreNum=e?parseFloat(e.score):0;
-  const scoreColor=scoreNum>=8?"#16a34a":scoreNum>=5?"#d97706":"#ef4444";
 
   return (
     <div style={{minHeight:"100vh",background:"#f0f0f0",fontFamily:"system-ui,sans-serif",display:"flex",flexDirection:"column"}}>
-      <style>{"@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}} @keyframes spin{to{transform:rotate(360deg)}}"}</style>
+      <style>{"@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}} @keyframes spin{to{transform:rotate(360deg)}} @keyframes ripple{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.5);opacity:0}}"}</style>
       <header style={{background:"white",borderBottom:"1px solid #e5e7eb",padding:"14px 28px",display:"flex",alignItems:"center",justifyContent:"space-between",boxShadow:"0 1px 4px rgba(0,0,0,0.05)"}}>
         <Logo/>
         {phase!=="welcome"&&(
@@ -388,90 +520,60 @@ function App() {
           </div>
         )}
       </header>
-      <main style={{flex:1,maxWidth:760,width:"100%",margin:"0 auto",padding:"28px 16px",display:"flex",flexDirection:"column",gap:20}}>
+      <main style={{flex:1,maxWidth:720,width:"100%",margin:"0 auto",padding:"28px 16px",display:"flex",flexDirection:"column",gap:20}}>
 
         {phase==="welcome"&&(
           <div style={{...card,maxWidth:500,margin:"32px auto",width:"100%"}}>
             <h2 style={{margin:"0 0 6px",fontSize:22,fontWeight:800}}>Welcome to Training</h2>
-            <p style={{margin:"0 0 24px",color:"#6b7280",fontSize:14}}>Enter your information to begin. You will complete {MIN_SCENARIOS}-{MAX_SCENARIOS} scenarios before receiving your full evaluation.</p>
+            <p style={{margin:"0 0 24px",color:"#6b7280",fontSize:14}}>Enter your information to begin your training session.</p>
             <label style={{display:"block",fontSize:13,fontWeight:600,color:"#374151",marginBottom:6}}>Full Name</label>
-            <input value={vaName} onChange={ev=>setVaName(ev.target.value)} placeholder="e.g. Maria Gonzalez"
-              style={{width:"100%",border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#111",marginBottom:20,background:"white"}}/>
+            <input value={vaName} onChange={ev=>setVaName(ev.target.value)} placeholder="e.g. Maria Gonzalez" style={{width:"100%",border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#111",marginBottom:20,background:"white"}}/>
             <label style={{display:"block",fontSize:13,fontWeight:600,color:"#374151",marginBottom:10}}>Your Position</label>
             <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:28}}>
-              {POSITIONS.map(p=>(
-                <button key={p} onClick={()=>setVaPosition(p)}
-                  style={{textAlign:"left",padding:"13px 16px",borderRadius:10,fontSize:14,fontWeight:500,cursor:"pointer",
-                    ...(vaPosition===p?{background:GRAD,border:"none",color:"white"}:{background:"#f9f9f9",border:"1px solid #e5e7eb",color:"#374151"})}}>
-                  {p}
-                </button>
-              ))}
+              {POSITIONS.map(p=><button key={p} onClick={()=>setVaPosition(p)} style={{textAlign:"left",padding:"13px 16px",borderRadius:10,fontSize:14,fontWeight:500,cursor:"pointer",...(vaPosition===p?{background:GRAD,border:"none",color:"white"}:{background:"#f9f9f9",border:"1px solid #e5e7eb",color:"#374151"})}}>{p}</button>)}
             </div>
-            <button onClick={()=>{if(vaName.trim()&&vaPosition)setPhase("dashboard");}}
-              disabled={!vaName.trim()||!vaPosition}
-              style={{width:"100%",padding:14,fontSize:16,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GRAD,cursor:"pointer",opacity:!vaName.trim()||!vaPosition?0.4:1}}>
-              Begin Training &#8594;
-            </button>
+            <button onClick={()=>{if(vaName.trim()&&vaPosition)setPhase("training-select");}} disabled={!vaName.trim()||!vaPosition} style={{width:"100%",padding:14,fontSize:16,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GRAD,cursor:"pointer",opacity:!vaName.trim()||!vaPosition?0.4:1}}>Continue</button>
           </div>
         )}
 
-        {phase==="dashboard"&&(
-          <React.Fragment>
-            <div style={{...card,padding:"20px 24px"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,marginBottom:16}}>
-                <div>
-                  <p style={{margin:0,fontSize:12,color:"#9333ea",textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Session Progress</p>
-                  <p style={{margin:"4px 0 0",fontSize:22,fontWeight:800,color:"#111"}}>{completedSessions.length} <span style={{fontSize:14,color:"#6b7280",fontWeight:400}}>of {MIN_SCENARIOS}-{MAX_SCENARIOS} scenarios</span></p>
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  {Array.from({length:MAX_SCENARIOS}).map((_,i)=>(
-                    <div key={i} style={{width:40,height:40,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:i<completedSessions.length?18:14,fontWeight:700,
-                      background:i<completedSessions.length?GRAD:"white",color:i<completedSessions.length?"white":"#d1d5db",border:i<completedSessions.length?"none":"2px solid #e5e7eb"}}>
-                      {i<completedSessions.length?"✓":i+1}
+        {phase==="training-select"&&(
+          <div style={{...card,maxWidth:520,margin:"32px auto",width:"100%"}}>
+            <h2 style={{margin:"0 0 6px",fontSize:22,fontWeight:800}}>Choose Training Type</h2>
+            <p style={{margin:"0 0 24px",color:"#6b7280",fontSize:14}}>Welcome <strong>{vaName}</strong>. Select the type of training you want to complete today.</p>
+            <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:24}}>
+              {[
+                {phase:"voice-dashboard",bg:GRAD,icon:"&#128222;",title:"Call Training",desc:"Practice live voice calls with AI-simulated clients. Speak and listen just like a real phone call.",disabled:false},
+                {phase:"email-dashboard",bg:BLUE,icon:"&#9993;",title:"Email Training",desc:"Receive client emails and write professional responses. AI evaluates tone, accuracy, and clarity.",disabled:false},
+                {phase:"doc-dashboard",bg:GREEN,icon:"&#128196;",title:"Document Drafting",desc:"Draft legal documents including settlements, motions, and demand letters. AI reviews as supervising attorney.",disabled:vaPosition!=="Paralegal",tag:"Paralegal Only"},
+              ].map(item=>(
+                <button key={item.title} onClick={()=>!item.disabled&&setPhase(item.phase)} style={{textAlign:"left",padding:20,borderRadius:14,border:"1px solid #e5e7eb",background:"#f9f9f9",cursor:item.disabled?"not-allowed":"pointer",opacity:item.disabled?0.4:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:14}}>
+                    <div style={{width:50,height:50,borderRadius:"50%",background:item.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:22}} dangerouslySetInnerHTML={{__html:item.icon}}/>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:16,color:"#111",marginBottom:3}}>{item.title}{item.tag&&<span style={{fontSize:11,background:"#faf5ff",color:"#9333ea",border:"1px solid #e9d5ff",borderRadius:6,padding:"2px 6px",marginLeft:6}}>{item.tag}</span>}</div>
+                      <div style={{fontSize:13,color:"#6b7280"}}>{item.desc}</div>
                     </div>
-                  ))}
-                </div>
-              </div>
-              {completedSessions.length>=MIN_SCENARIOS?(
-                <div style={{borderTop:"1px solid #f0f0f0",paddingTop:16,display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-                  <button onClick={getEvaluation} style={{padding:"13px 20px",fontSize:14,fontWeight:700,borderRadius:10,border:"none",color:"white",background:GRAD,cursor:"pointer",flex:1,minWidth:200}}>
-                    &#128202; Get My Full Evaluation
-                  </button>
-                  {completedSessions.length<MAX_SCENARIOS&&<span style={{fontSize:13,color:"#9ca3af"}}>or do one more scenario below</span>}
-                </div>
-              ):(
-                <p style={{margin:0,fontSize:13,color:"#9ca3af",borderTop:"1px solid #f0f0f0",paddingTop:12}}>
-                  Complete {MIN_SCENARIOS-completedSessions.length} more scenario{MIN_SCENARIOS-completedSessions.length>1?"s":""} to unlock your evaluation
-                </p>
-              )}
+                  </div>
+                </button>
+              ))}
             </div>
+            <button onClick={()=>setPhase("welcome")} style={{width:"100%",padding:12,fontSize:14,fontWeight:600,borderRadius:12,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",cursor:"pointer"}}>Back</button>
+          </div>
+        )}
+
+        {phase==="voice-dashboard"&&(
+          <React.Fragment>
+            <ProgressCard count={completedSessions.length} total={MAX_SCENARIOS} color="#9333ea" label="Call Training Progress" onEvaluate={getVoiceEval} evalLabel="Get My Call Performance Report"/>
             {completedSessions.length<MAX_SCENARIOS&&available.length>0&&(
               <div style={card}>
-                <p style={{margin:"0 0 14px",fontWeight:700,fontSize:13,color:"#9333ea",textTransform:"uppercase",letterSpacing:"0.08em"}}>
-                  {completedSessions.length===0?"Choose Your First Scenario":"Choose Next Scenario"}
-                </p>
+                <p style={{margin:"0 0 14px",fontWeight:700,fontSize:13,color:"#9333ea",textTransform:"uppercase",letterSpacing:"0.08em"}}>{completedSessions.length===0?"Choose Your First Call":"Choose Next Call"}</p>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {available.map(sc=>(
-                    <button key={sc.id} onClick={()=>startScenario(sc)}
-                      style={{textAlign:"left",padding:16,fontSize:14,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}>
-                      <div style={{fontWeight:700,marginBottom:4}}>{sc.label}</div>
-                      <div style={{fontSize:13,color:"#6b7280"}}>{sc.desc}</div>
-                    </button>
-                  ))}
+                  {available.map(sc=><button key={sc.id} onClick={()=>startScenario(sc)} style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}><div style={{fontWeight:700,marginBottom:4,fontSize:14}}>{sc.label}</div><div style={{fontSize:13,color:"#6b7280"}}>{sc.desc}</div></button>)}
                 </div>
               </div>
             )}
-            {completedSessions.length>0&&(
-              <div style={{...card,padding:"18px 24px"}}>
-                <p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>
-                {completedSessions.map((sc,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedSessions.length-1?"1px solid #f5f5f5":"none"}}>
-                    <div style={{width:28,height:28,borderRadius:"50%",background:GRAD,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div>
-                    <span style={{fontSize:14,fontWeight:600,color:"#374151"}}>{sc.scenario.label}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {completedSessions.length>0&&<div style={{...card,padding:"18px 24px"}}><p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>{completedSessions.map((sc,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedSessions.length-1?"1px solid #f5f5f5":"none"}}><div style={{width:26,height:26,borderRadius:"50%",background:GRAD,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div><span style={{fontSize:14,fontWeight:600,color:"#374151"}}>{sc.scenario.label}</span></div>)}</div>}
+            <button onClick={()=>setPhase("training-select")} style={{padding:12,borderRadius:12,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Back to Training Menu</button>
           </React.Fragment>
         )}
 
@@ -480,43 +582,158 @@ function App() {
             <div style={{...card,padding:"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontSize:12,fontWeight:700,padding:"4px 10px",borderRadius:999,background:GRAD,color:"white"}}>{vaPosition}</span>
-                <span style={{fontSize:14,color:"#374151",fontWeight:500}}>{currentScenario&&currentScenario.label}</span>
+                <span style={{fontSize:14,color:"#374151",fontWeight:500}}>{currentScenario?.label}</span>
               </div>
-              <span style={{fontSize:12,color:"#9ca3af",fontWeight:500}}>Scenario {completedSessions.length+1} of {MAX_SCENARIOS}</span>
+              <span style={{fontSize:12,color:"#9ca3af"}}>Call {completedSessions.length+1} of {MAX_SCENARIOS}</span>
             </div>
-            <div style={{background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:20,padding:16,display:"flex",flexDirection:"column",gap:12,overflowY:"auto",minHeight:300,maxHeight:440}}>
+            <div style={{background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:20,padding:16,display:"flex",flexDirection:"column",gap:12,overflowY:"auto",minHeight:240,maxHeight:360}}>
               {messages.map((m,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-                  <div style={{maxWidth:"78%",padding:"12px 16px",borderRadius:18,fontSize:14,lineHeight:1.6,
-                    ...(m.role==="user"?{background:GRAD,color:"white",borderTopRightRadius:4}:{background:"white",color:"#111",border:"1px solid #e5e7eb",borderTopLeftRadius:4})}}>
-                    {m.role==="ai"&&<div style={{fontSize:11,fontWeight:700,color:"#9333ea",marginBottom:4,letterSpacing:"0.08em"}}>SIMULATION</div>}
+                  <div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:16,fontSize:14,lineHeight:1.6,...(m.role==="user"?{background:GRAD,color:"white",borderTopRightRadius:4}:{background:"white",color:"#111",border:"1px solid #e5e7eb",borderTopLeftRadius:4})}}>
+                    <div style={{fontSize:10,fontWeight:700,marginBottom:3,opacity:0.7,letterSpacing:"0.08em"}}>{m.role==="user"?"YOU":"CLIENT"}</div>
                     {m.text}
                   </div>
                 </div>
               ))}
-              {aiLoading&&<TypingIndicator/>}
+              {(aiLoading||isSpeaking)&&<TypingDots/>}
+              {transcript&&<div style={{display:"flex",justifyContent:"flex-end"}}><div style={{maxWidth:"80%",padding:"10px 14px",borderRadius:16,fontSize:14,background:"rgba(147,51,234,0.08)",border:"1px dashed #9333ea",color:"#6b21a8",fontStyle:"italic"}}>{transcript}...</div></div>}
               <div ref={chatEndRef}/>
             </div>
-            <div style={{display:"flex",gap:10}}>
-              <input value={input} onChange={ev=>setInput(ev.target.value)} onKeyDown={ev=>ev.key==="Enter"&&sendMessage()}
-                placeholder="Type your response..."
-                style={{flex:1,background:"white",border:"1px solid #e5e7eb",borderRadius:12,padding:"13px 16px",fontSize:14,color:"#111"}}/>
-              <button onClick={sendMessage} disabled={aiLoading||!input.trim()}
-                style={{padding:"13px 20px",borderRadius:12,fontWeight:600,fontSize:14,border:"none",color:"white",background:GRAD,cursor:"pointer",opacity:aiLoading||!input.trim()?0.4:1}}>
-                Send
-              </button>
+            <div style={{textAlign:"center",fontSize:13,color:"#6b7280",fontWeight:500,minHeight:18}}>{statusMsg}</div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,padding:"8px 0"}}>
+              <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                {isListening&&<><div style={{position:"absolute",width:96,height:96,borderRadius:"50%",border:"2px solid #9333ea",animation:"ripple 1.5s infinite"}}/><div style={{position:"absolute",width:116,height:116,borderRadius:"50%",border:"2px solid #9333ea",animation:"ripple 1.5s 0.5s infinite"}}/></>}
+                <button onClick={toggleListening} disabled={isSpeaking||aiLoading} style={{width:76,height:76,borderRadius:"50%",border:"none",cursor:isSpeaking||aiLoading?"not-allowed":"pointer",fontSize:28,display:"flex",alignItems:"center",justifyContent:"center",background:isListening?"#ef4444":isSpeaking||aiLoading?"#e5e7eb":GRAD,color:"white",boxShadow:isListening?"0 0 0 4px rgba(239,68,68,0.3)":"0 4px 16px rgba(147,51,234,0.35)",transition:"all 0.2s",zIndex:10}}>&#127908;</button>
+              </div>
+              <p style={{margin:0,fontSize:13,color:"#6b7280"}}>{isListening?"Click mic again when done speaking":"Click mic to speak"}</p>
             </div>
-            <button onClick={endScenario} style={{padding:13,borderRadius:12,border:"1px solid #d1fae5",color:"#16a34a",background:"#f0fdf4",fontSize:14,fontWeight:600,cursor:"pointer"}}>
-              &#10003; Complete This Scenario &amp; Continue
-            </button>
+            <button onClick={endScenario} style={{padding:13,borderRadius:12,border:"1px solid #d1fae5",color:"#16a34a",background:"#f0fdf4",fontSize:14,fontWeight:600,cursor:"pointer"}}>End Call and Continue</button>
           </React.Fragment>
         )}
+
+        {phase==="email-dashboard"&&(
+          <React.Fragment>
+            <ProgressCard count={completedEmails.length} total={MIN_SCENARIOS} color="#3b82f6" label="Email Training Progress" onEvaluate={getEmailEval} evalLabel="Get My Email Performance Report"/>
+            {completedEmails.length<MIN_SCENARIOS&&emailPool.length>0&&(
+              <div style={card}>
+                <p style={{margin:"0 0 14px",fontWeight:700,fontSize:13,color:"#3b82f6",textTransform:"uppercase",letterSpacing:"0.08em"}}>{completedEmails.length===0?"Choose Your First Email":"Choose Next Email"}</p>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {emailPool.map(sc=><button key={sc.id} onClick={()=>{setEmailScenario(sc);setEmailReply("");setEmailFeedback(null);setPhase("email-compose");}} style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}><div style={{fontWeight:700,marginBottom:3,fontSize:14}}>{sc.label}</div><div style={{fontSize:12,color:"#6b7280"}}>From: {sc.from}</div><div style={{fontSize:12,color:"#374151",marginTop:3,fontStyle:"italic"}}>"{sc.subject}"</div></button>)}
+                </div>
+              </div>
+            )}
+            {completedEmails.length>0&&<div style={{...card,padding:"18px 24px"}}><p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>{completedEmails.map((em,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedEmails.length-1?"1px solid #f5f5f5":"none"}}><div style={{width:26,height:26,borderRadius:"50%",background:BLUE,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div><span style={{fontSize:14,fontWeight:600,color:"#374151"}}>{em.label}</span></div>)}</div>}
+            <button onClick={()=>setPhase("training-select")} style={{padding:12,borderRadius:12,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Back to Training Menu</button>
+          </React.Fragment>
+        )}
+
+        {phase==="email-compose"&&emailScenario&&(
+          <React.Fragment>
+            <div style={{...card,borderLeft:"4px solid #3b82f6",borderRadius:"0 20px 20px 0"}}>
+              <p style={{margin:"0 0 10px",fontSize:11,fontWeight:700,color:"#3b82f6",textTransform:"uppercase",letterSpacing:"0.1em"}}>Incoming Email</p>
+              <div style={{display:"grid",gridTemplateColumns:"60px 1fr",gap:"4px 8px",marginBottom:10}}>
+                <span style={{fontSize:12,color:"#9ca3af",fontWeight:600}}>From:</span><span style={{fontSize:13,color:"#374151"}}>{emailScenario.from}</span>
+                <span style={{fontSize:12,color:"#9ca3af",fontWeight:600}}>Subject:</span><span style={{fontSize:13,color:"#111",fontWeight:700}}>{emailScenario.subject}</span>
+              </div>
+              <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#374151",lineHeight:1.7,borderLeft:"2px solid #e5e7eb"}}>{emailScenario.body}</div>
+            </div>
+            <div style={card}>
+              <p style={{margin:"0 0 4px",fontSize:13,fontWeight:700,color:"#374151"}}>Your Reply</p>
+              <p style={{margin:"0 0 10px",fontSize:12,color:"#9ca3af"}}>Write your professional email response. You will be evaluated on tone, accuracy, and clarity.</p>
+              <div style={{marginBottom:8,padding:"7px 10px",background:"#f9f9f9",borderRadius:8,fontSize:12,color:"#6b7280"}}>To: {emailScenario.from} — Re: {emailScenario.subject}</div>
+              <textarea value={emailReply} onChange={ev=>setEmailReply(ev.target.value)} placeholder="Type your email response here..." style={{width:"100%",minHeight:200,border:"1px solid #e5e7eb",borderRadius:10,padding:"12px 14px",fontSize:14,color:"#111",resize:"vertical",fontFamily:"inherit",lineHeight:1.6,outline:"none"}}/>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10}}>
+                <span style={{fontSize:12,color:"#9ca3af"}}>{emailReply.length} characters</span>
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>setPhase("email-dashboard")} style={{padding:"9px 14px",borderRadius:10,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Cancel</button>
+                  <button onClick={submitEmailReply} disabled={aiLoading||!emailReply.trim()} style={{padding:"9px 18px",borderRadius:10,border:"none",color:"white",background:BLUE,fontSize:13,fontWeight:700,cursor:"pointer",opacity:aiLoading||!emailReply.trim()?0.4:1}}>{aiLoading?"Evaluating...":"Submit for Review"}</button>
+                </div>
+              </div>
+            </div>
+          </React.Fragment>
+        )}
+
+        {phase==="email-feedback"&&emailFeedback&&(()=>{
+          const f=parseEmailFeedback(emailFeedback);
+          return <React.Fragment>
+            <ScoreCard score={f.score} label="Email Score" color="#3b82f6"/>
+            {f.strengths?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#16a34a",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Strengths</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.strengths.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
+            {f.improvements?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#d97706",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Areas for Improvement</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.improvements.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
+            {f.suggested&&<div style={{...card,borderLeft:"4px solid #3b82f6",borderRadius:"0 20px 20px 0"}}><h3 style={{margin:"0 0 10px",color:"#3b82f6",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Model Response</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,whiteSpace:"pre-wrap"}}>{f.suggested}</p></div>}
+            {f.tip&&<div style={{...card,background:"#faf5ff",border:"1px solid #e9d5ff"}}><h3 style={{margin:"0 0 6px",color:"#9333ea",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Coaching Tip</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.6}}>{f.tip}</p></div>}
+            <button onClick={()=>{setEmailScenario(null);setEmailReply("");setEmailFeedback(null);setPhase("email-dashboard");}} style={{width:"100%",padding:14,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:BLUE,cursor:"pointer"}}>{completedEmails.length>=MIN_SCENARIOS?"Get Final Evaluation":"Next Email"}</button>
+          </React.Fragment>;
+        })()}
+
+        {phase==="doc-dashboard"&&(
+          <React.Fragment>
+            <ProgressCard count={completedDocs.length} total={MIN_SCENARIOS} color="#10b981" label="Document Drafting Progress" onEvaluate={getDocEval} evalLabel="Get My Document Drafting Report"/>
+            {completedDocs.length<MIN_SCENARIOS&&docPool.length>0&&(
+              <div style={card}>
+                <p style={{margin:"0 0 14px",fontWeight:700,fontSize:13,color:"#10b981",textTransform:"uppercase",letterSpacing:"0.08em"}}>{completedDocs.length===0?"Choose Your First Document":"Choose Next Document"}</p>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {docPool.map(sc=>(
+                    <button key={sc.id} onClick={()=>{setDocScenario(sc);setDocDraft("");setDocFeedback(null);setPhase("doc-compose");}} style={{textAlign:"left",padding:16,background:"#f9f9f9",border:"1px solid #e5e7eb",borderRadius:12,cursor:"pointer",color:"#111"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+                        <span style={{fontWeight:700,fontSize:14}}>{sc.label}</span>
+                        <span style={{fontSize:11,padding:"2px 8px",borderRadius:20,fontWeight:600,background:sc.difficulty==="Beginner"?"#dcfce7":sc.difficulty==="Intermediate"?"#fef9c3":"#fee2e2",color:sc.difficulty==="Beginner"?"#16a34a":sc.difficulty==="Intermediate"?"#a16207":"#dc2626"}}>{sc.difficulty}</span>
+                      </div>
+                      <div style={{fontSize:12,color:"#6b7280"}}>{sc.docType}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {completedDocs.length>0&&<div style={{...card,padding:"18px 24px"}}><p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#9ca3af",textTransform:"uppercase",letterSpacing:"0.08em"}}>Completed</p>{completedDocs.map((d,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedDocs.length-1?"1px solid #f5f5f5":"none"}}><div style={{width:26,height:26,borderRadius:"50%",background:GREEN,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>&#10003;</div><div><div style={{fontSize:14,fontWeight:600,color:"#374151"}}>{d.label}</div><div style={{fontSize:12,color:"#9ca3af"}}>{d.docType}</div></div></div>)}</div>}
+            <button onClick={()=>setPhase("training-select")} style={{padding:12,borderRadius:12,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Back to Training Menu</button>
+          </React.Fragment>
+        )}
+
+        {phase==="doc-compose"&&docScenario&&(
+          <React.Fragment>
+            <div style={{...card,borderLeft:"4px solid #10b981",borderRadius:"0 20px 20px 0"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                <p style={{margin:0,fontSize:11,fontWeight:700,color:"#10b981",textTransform:"uppercase",letterSpacing:"0.1em"}}>Assignment from Supervising Attorney</p>
+                <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:600,background:docScenario.difficulty==="Beginner"?"#dcfce7":docScenario.difficulty==="Intermediate"?"#fef9c3":"#fee2e2",color:docScenario.difficulty==="Beginner"?"#16a34a":docScenario.difficulty==="Intermediate"?"#a16207":"#dc2626"}}>{docScenario.difficulty}</span>
+              </div>
+              <h3 style={{margin:"0 0 10px",fontSize:16,fontWeight:800,color:"#111"}}>{docScenario.label}</h3>
+              <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",fontSize:13,color:"#374151",lineHeight:1.8,whiteSpace:"pre-line",fontFamily:"monospace",border:"1px solid #e5e7eb"}}>{docScenario.brief}</div>
+            </div>
+            <div style={card}>
+              <p style={{margin:"0 0 6px",fontSize:13,fontWeight:700,color:"#374151"}}>Required Elements</p>
+              <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:16}}>
+                {docScenario.requirements.map((r,i)=><div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,fontSize:13,color:"#374151"}}><div style={{width:18,height:18,borderRadius:"50%",border:"1.5px solid #10b981",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:10,color:"#10b981",fontWeight:700,marginTop:1}}>{i+1}</div>{r}</div>)}
+              </div>
+              <p style={{margin:"0 0 8px",fontSize:13,fontWeight:700,color:"#374151",borderTop:"1px solid #f0f0f0",paddingTop:14}}>Your Draft</p>
+              <textarea value={docDraft} onChange={ev=>setDocDraft(ev.target.value)} placeholder={"Draft your "+docScenario.docType+" here...\n\nInclude all required elements. Use proper legal formatting."} style={{width:"100%",minHeight:340,border:"1px solid #e5e7eb",borderRadius:10,padding:"14px 16px",fontSize:13,color:"#111",resize:"vertical",fontFamily:"Georgia,serif",lineHeight:1.8,outline:"none"}}/>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:10}}>
+                <span style={{fontSize:12,color:"#9ca3af"}}>{docDraft.split(/\s+/).filter(Boolean).length} words</span>
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>setPhase("doc-dashboard")} style={{padding:"9px 14px",borderRadius:10,border:"1px solid #e5e7eb",color:"#6b7280",background:"white",fontSize:13,cursor:"pointer"}}>Cancel</button>
+                  <button onClick={submitDocDraft} disabled={aiLoading||!docDraft.trim()} style={{padding:"9px 18px",borderRadius:10,border:"none",color:"white",background:GREEN,fontSize:13,fontWeight:700,cursor:"pointer",opacity:aiLoading||!docDraft.trim()?0.4:1}}>{aiLoading?"Attorney Reviewing...":"Submit for Attorney Review"}</button>
+                </div>
+              </div>
+            </div>
+          </React.Fragment>
+        )}
+
+        {phase==="doc-feedback"&&docFeedback&&(()=>{
+          const f=parseDocFeedback(docFeedback);
+          return <React.Fragment>
+            <ScoreCard score={f.score} label="Attorney Review Score" color="#10b981"/>
+            {f.checklist?.length>0&&<div style={card}><h3 style={{margin:"0 0 12px",color:"#374151",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Required Elements Checklist</h3><div style={{display:"flex",flexDirection:"column",gap:6}}>{f.checklist.map((item,i)=>{const ok=item.toLowerCase().includes("present");const miss=item.toLowerCase().includes("missing");return <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"8px 12px",borderRadius:8,background:ok?"#f0fdf4":miss?"#fef2f2":"#fefce8",border:"1px solid "+(ok?"#bbf7d0":miss?"#fecaca":"#fef08a")}}><span style={{fontSize:14,flexShrink:0}}>{ok?"✓":miss?"✗":"~"}</span><span style={{fontSize:13,color:"#374151"}}>{item}</span></div>;})}</div></div>}
+            {f.strengths?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#16a34a",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Well Done</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.strengths.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
+            {f.revisions?.length>0&&<div style={card}><h3 style={{margin:"0 0 10px",color:"#d97706",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Revisions Needed</h3><ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:6}}>{f.revisions.map((s,i)=><li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}><span style={{color:"#d1d5db"}}>—</span><span>{s}</span></li>)}</ul></div>}
+            {f.notes&&<div style={{...card,borderLeft:"4px solid #10b981",borderRadius:"0 20px 20px 0"}}><h3 style={{margin:"0 0 8px",color:"#10b981",fontSize:14,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Attorney Notes</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,fontStyle:"italic"}}>{f.notes}</p></div>}
+            <button onClick={()=>{setDocScenario(null);setDocDraft("");setDocFeedback(null);setPhase("doc-dashboard");}} style={{width:"100%",padding:14,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GREEN,cursor:"pointer"}}>{completedDocs.length>=MIN_SCENARIOS?"Get Final Evaluation":"Next Document"}</button>
+          </React.Fragment>;
+        })()}
 
         {phase==="evaluating"&&(
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flex:1,gap:16,padding:"80px 0"}}>
             <div style={{width:52,height:52,borderRadius:"50%",border:"4px solid #e9d5ff",borderTopColor:"#9333ea",animation:"spin 1s linear infinite"}}/>
-            <p style={{color:"#374151",fontSize:16,fontWeight:600}}>Analyzing {completedSessions.length} scenarios...</p>
-            <p style={{color:"#9ca3af",fontSize:13}}>Generating full performance report for {vaName}</p>
+            <p style={{color:"#374151",fontSize:16,fontWeight:600}}>Generating your performance report...</p>
+            <p style={{color:"#9ca3af",fontSize:13}}>This takes about 20 seconds</p>
           </div>
         )}
 
@@ -524,52 +741,15 @@ function App() {
           <React.Fragment>
             <div style={{...card,textAlign:"center"}}>
               <div style={{fontSize:11,fontWeight:700,color:"#9333ea",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.12em"}}>Overall Training Score</div>
-              <div style={{fontSize:80,fontWeight:900,lineHeight:1,color:scoreColor}}>{e.score}</div>
-              <div style={{fontSize:14,color:"#6b7280",marginTop:8}}>{vaName} &middot; {vaPosition} &middot; {completedSessions.length} scenarios</div>
+              <div style={{fontSize:80,fontWeight:900,lineHeight:1,color:parseFloat(e.score)>=8?"#16a34a":parseFloat(e.score)>=5?"#d97706":"#ef4444"}}>{e.score}</div>
+              <div style={{fontSize:14,color:"#6b7280",marginTop:8}}>{vaName} &middot; {vaPosition}</div>
             </div>
-            <div style={card}>
-              <p style={{margin:"0 0 12px",fontWeight:700,fontSize:12,color:"#6b7280",textTransform:"uppercase",letterSpacing:"0.08em"}}>Scenarios Evaluated</p>
-              {completedSessions.map((sc,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<completedSessions.length-1?"1px solid #f5f5f5":"none"}}>
-                  <div style={{width:26,height:26,borderRadius:"50%",background:GRAD,color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>{i+1}</div>
-                  <span style={{fontSize:14,color:"#374151",fontWeight:500}}>{sc.scenario.label}</span>
-                </div>
-              ))}
-            </div>
-            {[
-              {title:"Strengths",items:e.strengths,color:"#16a34a"},
-              {title:"Areas for Improvement",items:e.weaknesses,color:"#d97706"},
-              {title:"Missed Opportunities",items:e.missed,color:"#ea580c"},
-              {title:"Suggested Responses",items:e.suggested,color:"#9333ea"},
-            ].map(function(sec){return sec.items&&sec.items.length>0&&(
-              <div key={sec.title} style={card}>
-                <h3 style={{margin:"0 0 12px",color:sec.color,fontSize:15}}>{sec.title}</h3>
-                <ul style={{margin:0,padding:0,listStyle:"none",display:"flex",flexDirection:"column",gap:8}}>
-                  {sec.items.map((item,i)=>(
-                    <li key={i} style={{fontSize:14,color:"#374151",display:"flex",gap:8}}>
-                      <span style={{color:"#d1d5db",flexShrink:0}}>&bull;</span><span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );})}
-            {e.rec&&(
-              <div style={card}>
-                <h3 style={{margin:"0 0 10px",fontSize:15,color:"#111"}}>Final Recommendation</h3>
-                <p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,background:"#faf5ff",padding:"14px 16px",borderRadius:10}}>{e.rec}</p>
-              </div>
-            )}
-            <div style={{display:"flex",gap:12}}>
-              <button onClick={()=>generatePDF(vaName,vaPosition,completedSessions,evaluation)}
-                style={{flex:1,padding:16,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GRAD,cursor:"pointer"}}>
-                &#11015; Download PDF Report
-              </button>
-              <button onClick={reset} style={{padding:16,fontSize:14,fontWeight:600,borderRadius:12,border:"1px solid #e5e7eb",color:"#374151",background:"white",cursor:"pointer"}}>
-                New Session
-              </button>
-            </div>
+            <ResultSections e={e}/>
+            {e.rec&&<div style={card}><h3 style={{margin:"0 0 10px",fontSize:14,color:"#111",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em"}}>Final Recommendation</h3><p style={{margin:0,fontSize:14,color:"#374151",lineHeight:1.7,background:"#faf5ff",padding:"14px 16px",borderRadius:10}}>{e.rec}</p></div>}
+            <button onClick={reset} style={{width:"100%",padding:16,fontSize:15,fontWeight:700,borderRadius:12,border:"none",color:"white",background:GRAD,cursor:"pointer"}}>Start New Session</button>
           </React.Fragment>
         )}
+
       </main>
     </div>
   );
@@ -578,4 +758,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 </script>
 </body>
 </html>
-```
